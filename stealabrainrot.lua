@@ -1,12 +1,12 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "My Singing Brainrot Hub - Made by skulldagrait",
+    Name = "Steal A Brainrot - Made by skulldagrait",
     LoadingTitle = "Loading...",
     LoadingSubtitle = "By skulldagrait",
     ConfigurationSaving = {
         Enabled = true,
-        FolderName = "MSB_Hub",
+        FolderName = "StealABrainrot",
         FileName = "Config"
     },
     Discord = { Enabled = false },
@@ -15,64 +15,87 @@ local Window = Rayfield:CreateWindow({
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local HumanoidRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 local Workspace = game:GetService("Workspace")
 
-local MainTab = Window:CreateTab("Main", 4483362458)
+local function createESP(pet)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Size = UDim2.new(0, 200, 0, 50)
+    billboard.Adornee = pet.PrimaryPart or pet:FindFirstChildWhichIsA("BasePart")
+    billboard.AlwaysOnTop = true
+    billboard.Parent = pet
 
-MainTab:CreateButton({
-    Name = "Walk to Highest Cash/Sec Brainrot",
-    Callback = function()
-        local highest = nil
-        local maxCash = 0
-        for _, plot in pairs(Workspace.Plots:GetChildren()) do
-            for _, brainrot in pairs(plot:GetDescendants()) do
-                if brainrot:FindFirstChild("CashPerSecond") then
-                    local cps = tonumber(brainrot.CashPerSecond.Value)
-                    if cps and cps > maxCash then
-                        maxCash = cps
-                        highest = brainrot
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextScaled = true
+    label.TextStrokeTransparency = 0
+    label.TextStrokeColor3 = Color3.new(0,0,0)
+    label.Font = Enum.Font.SourceSansBold
+    label.Text = pet.Name
+
+    local rarity = pet:FindFirstChild("Rarity", true)
+    if rarity then
+        if rarity.Value == "Mythic" then
+            label.TextColor3 = Color3.fromRGB(0,255,255)
+        elseif rarity.Value == "Brainrot God" then
+            label.TextColor3 = Color3.fromRGB(255,0,255)
+        elseif rarity.Value == "Secret" then
+            label.TextColor3 = Color3.fromRGB(255,255,0)
+        else
+            label.TextColor3 = Color3.fromRGB(255,255,255)
+        end
+    end
+
+    label.Parent = billboard
+end
+
+local function initESP()
+    for _,plot in ipairs(Workspace.Plots:GetChildren()) do
+        if plot.Name ~= LocalPlayer.Name then
+            for _,pet in ipairs(plot:GetDescendants()) do
+                local rarity = pet:FindFirstChild("Rarity", true)
+                if rarity and (rarity.Value == "Mythic" or rarity.Value == "Brainrot God" or rarity.Value == "Secret") then
+                    if pet:IsA("Model") and not pet:FindFirstChild("ESP") then
+                        createESP(pet)
                     end
                 end
             end
         end
-        if highest and highest:FindFirstChild("HumanoidRootPart") then
-            HumanoidRootPart.CFrame = highest.HumanoidRootPart.CFrame + Vector3.new(0,2,0)
-        end
-    end,
-})
+    end
+end
 
-local VisualTab = Window:CreateTab("Visual", 4483362458)
+local function getBestPet()
+    local bestPet = nil
+    local highestCPS = 0
 
-VisualTab:CreateButton({
-    Name = "Enable Fullbright",
-    Callback = function()
-        local lighting = game:GetService("Lighting")
-        lighting.Ambient = Color3.new(0.6,0.6,0.6)
-        lighting.Brightness = 3
-        lighting.ClockTime = 12
-        lighting.FogEnd = 10000
-        lighting.GlobalShadows = false
-    end,
-})
-
-VisualTab:CreateButton({
-    Name = "FPS Booster",
-    Callback = function()
-        for _,v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
-                v.Enabled = false
-            elseif v:IsA("Decal") or v:IsA("Texture") then
-                v.Transparency = 1
-            elseif v:IsA("MeshPart") or v:IsA("Part") or v:IsA("UnionOperation") then
-                if v.Material ~= Enum.Material.SmoothPlastic then
-                    v.Material = Enum.Material.SmoothPlastic
+    for _,plot in ipairs(Workspace.Plots:GetChildren()) do
+        if plot.Name ~= LocalPlayer.Name then
+            for _,pet in ipairs(plot:GetDescendants()) do
+                local cps = pet:FindFirstChild("CashPerSecond", true)
+                if cps and tonumber(cps.Value) and tonumber(cps.Value) > highestCPS then
+                    highestCPS = tonumber(cps.Value)
+                    bestPet = pet
                 end
-                v.Reflectance = 0
             end
         end
+    end
+
+    return bestPet
+end
+
+local MainTab = Window:CreateTab("Main", 4483362458)
+
+MainTab:CreateButton({
+    Name = "Steal Best Pet",
+    Callback = function()
+        local pet = getBestPet()
+        if pet and pet.PrimaryPart then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = pet.PrimaryPart.CFrame + Vector3.new(0,3,0)
+        end
     end,
 })
+
+initESP()
 
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
 
