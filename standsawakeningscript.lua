@@ -93,7 +93,7 @@ VisualTab:CreateButton({
 local BossTab = Window:CreateTab("Boss", 4483362458)
 
 BossTab:CreateButton({
-    Name = "Start AutoBoss",
+    Name = "Start AutoBoss (Huge Hitbox + Dodge + Fast Swing)",
     Callback = function()
         local Attacking = Workspace.Dead
         local Obby = Workspace.ObbyW
@@ -113,27 +113,50 @@ BossTab:CreateButton({
             Sword.GripPos = Vector3.new(0,0,0)
             LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):UnequipTools()
             LocalPlayer.Backpack["KnightsSword"].Parent = LocalPlayer.Character
-            Sword.Handle.Size = Vector3.new(20, 20, 500)
+            Sword.Handle.Size = Vector3.new(1000, 1000, 1000) -- MASSIVE HITBOX
         end
 
+        -- Dodge System
+        task.spawn(function()
+            local safeOffset = Vector3.new(0, 50, 0)
+            game:GetService("RunService").Heartbeat:Connect(function()
+                for _,v in pairs(Workspace:GetDescendants()) do
+                    if v:IsA("BasePart") or v:IsA("MeshPart") or v:IsA("Part") then
+                        local name = v.Name:lower()
+                        local size = v.Size
+                        if (name:find("bomb") or name:find("laser") or name:find("attack") or name:find("effect") or name:find("hitbox") or size.X > 20 or size.Z > 20) then
+                            if (v.Position - HumanoidRootPart.Position).Magnitude < 20 then
+                                HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + safeOffset
+                            end
+                        end
+                    end
+                end
+            end)
+        end)
+
+        -- Auto Movement
         task.spawn(function()
             while Attacking.Value == false do
-                task.wait()
+                task.wait(0.1) -- 2x faster
                 if Obby.Value == true then
                     HumanoidRootPart.CFrame = CFrame.new(20.4561386, 113.245972, 196.61351)
                 else
                     if Phase.Value == "None" then
                         HumanoidRootPart.CFrame = CFrame.new(-5.46999931, -4.45343876, 248.209991)
                     else
-                        HumanoidRootPart.CFrame = CFrame.new(-19.8957844, -4.77343941, 142.49881)
+                        local boss = Workspace:FindFirstChild("Boss") or Workspace:FindFirstChild("UncannyBoss")
+                        if boss and boss:FindFirstChild("HumanoidRootPart") then
+                            HumanoidRootPart.CFrame = boss.HumanoidRootPart.CFrame * CFrame.new(0, 50, -50)
+                        end
                     end
                 end
             end
         end)
 
+        -- Auto Attack (2x faster)
         task.spawn(function()
             while Attacking.Value == false do
-                task.wait()
+                task.wait(0.1)
                 if Obby.Value == false then
                     if LocalPlayer.Character:FindFirstChild("KnightsSword") then
                         LocalPlayer.Character.KnightsSword:Activate()
@@ -143,21 +166,6 @@ BossTab:CreateButton({
         end)
     end,
 })
-
-local TeleportTab = Window:CreateTab("Teleport", 4483362458)
-
-TeleportTab:CreateButton({ Name = "Timmy NPC", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1394, 584, -219) end end })
-TeleportTab:CreateButton({ Name = "Tim NPC", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1399, 584, -216) end end })
-TeleportTab:CreateButton({ Name = "Tom NPC", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1343, 587, -554) end end })
-TeleportTab:CreateButton({ Name = "Sans NPC", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1045, 583, -442) end end })
-TeleportTab:CreateButton({ Name = "Donation Leaderboard", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1670, 583, -506) end end })
-TeleportTab:CreateButton({ Name = "Waterfall (Uncanney Key spawn)", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1625, 578, -747) end end })
-TeleportTab:CreateButton({ Name = "Doghouse (Uncanney Key spawn)", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1033, 583, -178) end end })
-TeleportTab:CreateButton({ Name = "Arena", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1248, 583, -280) end end })
-TeleportTab:CreateButton({ Name = "Key Portal", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1093, 583, -699) end end })
-TeleportTab:CreateButton({ Name = "Stand/Rokaka/Arrow Farm", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(-339, 461, -1514) end end })
-TeleportTab:CreateButton({ Name = "Main Area (Middle of map)", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1341, 583, -482) end end })
-TeleportTab:CreateButton({ Name = "D4C Location", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(-3070, 464, -421) end end })
 
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
 
