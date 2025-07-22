@@ -13,17 +13,17 @@ local Window = Rayfield:CreateWindow({
    KeySystem = false,
 })
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local HumanoidRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+local Workspace = game:GetService("Workspace")
+
 local ItemsTab = Window:CreateTab("Items", 4483362458)
 
 ItemsTab:CreateButton({
     Name = "Auto Pickup Uncanney Key + Teleport (Once)",
     Callback = function()
         local teleported = false
-        local Players = game:GetService("Players")
-        local LocalPlayer = Players.LocalPlayer
-        local HumanoidRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local Workspace = game:GetService("Workspace")
-
         task.spawn(function()
             while true do
                 task.wait(1)
@@ -31,7 +31,6 @@ ItemsTab:CreateButton({
                     if v:IsA("Tool") and v.Name == "Uncanney Key" then
                         firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Handle, 0)
                         firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Handle, 1)
-
                         if not teleported then
                             teleported = true
                             HumanoidRootPart.CFrame = CFrame.new(-80.54, 3.66, 245.48)
@@ -60,7 +59,6 @@ VisualTab:CreateButton({
 VisualTab:CreateButton({
     Name = "FPS Booster (Main Game)",
     Callback = function()
-        local Workspace = game:GetService("Workspace")
         for _,v in pairs(Workspace:GetDescendants()) do
             if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
                 v.Enabled = false
@@ -79,7 +77,7 @@ VisualTab:CreateButton({
 VisualTab:CreateButton({
     Name = "FPS Booster (Boss)",
     Callback = function()
-        for _,v in pairs(game.Workspace:GetDescendants()) do
+        for _,v in pairs(Workspace:GetDescendants()) do
             if v:IsA("BasePart") or v:IsA("MeshPart") or v:IsA("Part") then
                 if v.Name:lower():find("bomb") or v.Name:lower():find("effect") or v.Name:lower():find("blue") then
                     v.Transparency = 1
@@ -97,30 +95,24 @@ local BossTab = Window:CreateTab("Boss", 4483362458)
 BossTab:CreateButton({
     Name = "Start AutoBoss",
     Callback = function()
-        local Players = game:GetService("Players")
-        local LocalPlayer = Players.LocalPlayer
-        local Character = LocalPlayer.Character
-        local HumanoidRootPart = Character.HumanoidRootPart
-        local Humanoid = Character:FindFirstChildOfClass("Humanoid")
-        local Workspace = game:GetService("Workspace")
         local Attacking = Workspace.Dead
         local Obby = Workspace.ObbyW
         local Phase = Workspace.BossPhase
 
         if LocalPlayer.Backpack:FindFirstChild("KnightsSword") then
-            LocalPlayer.Backpack["KnightsSword"].Parent = Character
+            LocalPlayer.Backpack["KnightsSword"].Parent = LocalPlayer.Character
         end
 
-        if Character:FindFirstChild("KnightsSword") then
-            local Sword = Character:FindFirstChild("KnightsSword")
+        if LocalPlayer.Character:FindFirstChild("KnightsSword") then
+            local Sword = LocalPlayer.Character:FindFirstChild("KnightsSword")
             local Box = Instance.new("SelectionBox")
             Box.Name = "SelectionBoxCreated"
             Box.Parent = Sword.Handle
             Box.Adornee = Sword.Handle
             Sword.Handle.Massless = true
             Sword.GripPos = Vector3.new(0,0,0)
-            Humanoid:UnequipTools()
-            LocalPlayer.Backpack["KnightsSword"].Parent = Character
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):UnequipTools()
+            LocalPlayer.Backpack["KnightsSword"].Parent = LocalPlayer.Character
             Sword.Handle.Size = Vector3.new(20, 20, 500)
         end
 
@@ -143,12 +135,68 @@ BossTab:CreateButton({
             while Attacking.Value == false do
                 task.wait()
                 if Obby.Value == false then
-                    if Character:FindFirstChild("KnightsSword") then
-                        Character.KnightsSword:Activate()
+                    if LocalPlayer.Character:FindFirstChild("KnightsSword") then
+                        LocalPlayer.Character.KnightsSword:Activate()
                     end
                 end
             end
         end)
+    end,
+})
+
+local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+
+TeleportTab:CreateButton({
+    Name = "Waterfall (Uncanney Key spawn)",
+    Callback = function()
+        if HumanoidRootPart then
+            HumanoidRootPart.CFrame = CFrame.new(-350.72, -14.55, 58.64)
+        end
+    end,
+})
+
+TeleportTab:CreateButton({
+    Name = "Doghouse (Uncanney Key spawn)",
+    Callback = function()
+        if HumanoidRootPart then
+            HumanoidRootPart.CFrame = CFrame.new(270.15, 3.67, 82.33)
+        end
+    end,
+})
+
+TeleportTab:CreateButton({
+    Name = "Boss Key Insert Area",
+    Callback = function()
+        if HumanoidRootPart then
+            HumanoidRootPart.CFrame = CFrame.new(-80.54, 3.66, 245.48)
+        end
+    end,
+})
+
+TeleportTab:CreateButton({
+    Name = "Merchant NPC",
+    Callback = function()
+        if HumanoidRootPart then
+            HumanoidRootPart.CFrame = CFrame.new(100.25, 3.55, 120.66)
+        end
+    end,
+})
+
+TeleportTab:CreateButton({
+    Name = "Stand Storage NPC",
+    Callback = function()
+        if HumanoidRootPart then
+            HumanoidRootPart.CFrame = CFrame.new(-10.45, 3.55, 150.22)
+        end
+    end,
+})
+
+TeleportTab:CreateButton({
+    Name = "Arrow Shop NPC",
+    Callback = function()
+        if HumanoidRootPart then
+            HumanoidRootPart.CFrame = CFrame.new(55.12, 3.55, 95.33)
+        end
     end,
 })
 
