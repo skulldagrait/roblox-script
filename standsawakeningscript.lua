@@ -1,66 +1,59 @@
--- Load Rayfield Library
+-- Load Rayfield UI
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Create Window
 local Window = Rayfield:CreateWindow({
-   Name = "Stands Awakening Script",
-   LoadingTitle = "Stands Awakening AutoBoss",
+   Name = "Stands Awakening Utilities",
+   LoadingTitle = "Loading...",
    LoadingSubtitle = "By YourNameHere",
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "SA_AutoBoss", -- Change if you want
-      FileName = "AutoBossConfig"
+      FolderName = "SA_Utilities",
+      FileName = "Config"
    },
-   Discord = {
-      Enabled = false,
-   },
+   Discord = { Enabled = false },
    KeySystem = false,
 })
 
--- Create Tab
-local MainTab = Window:CreateTab("Main", 4483362458) -- Icon ID is optional
+-- Main Tab
+local MainTab = Window:CreateTab("Main", 4483362458)
 
--- Add Auto Boss Button
+-- Teleport to Uncanny Boss Button
 MainTab:CreateButton({
-   Name = "Start Auto Boss",
-   Callback = function()
-       -- Your Auto Boss code here
-
-       -- Example basic loop
-       while true do
-           task.wait(0.2)
-
-           local boss = workspace:FindFirstChild("BossNameHere") -- replace with real boss name
-           local player = game.Players.LocalPlayer
-
-           if boss and player and boss:FindFirstChild("Humanoid") then
-               -- Example tool activation
-               for i,v in pairs(player.Character:GetChildren()) do
-                   if v:IsA("Tool") then
-                       v:Activate()
-                   end
-               end
-
-               -- Example teleport near boss
-               if player.Character:FindFirstChild("HumanoidRootPart") then
-                   player.Character.HumanoidRootPart.CFrame = boss.HumanoidRootPart.CFrame * CFrame.new(0,0,-10)
-               end
-           end
-       end
-
-   end,
+    Name = "Teleport to Uncanny Boss",
+    Callback = function()
+        local TeleportService = game:GetService("TeleportService")
+        TeleportService:Teleport(11423379012)
+        Rayfield:Notify({
+            Title = "Teleport",
+            Content = "Teleporting to Uncanny Boss...",
+            Duration = 5,
+        })
+    end,
 })
 
--- UI Loaded
+-- Fullbright Button
+MainTab:CreateButton({
+    Name = "Enable Fullbright",
+    Callback = function()
+        local lighting = game:GetService("Lighting")
+        lighting.Ambient = Color3.new(1,1,1)
+        lighting.Brightness = 10
+        lighting.ClockTime = 12
+        lighting.FogEnd = 100000
+        lighting.GlobalShadows = false
+
+        Rayfield:Notify({
+            Title = "Fullbright",
+            Content = "Fullbright enabled!",
+            Duration = 5,
+        })
+    end,
+})
+
+-- UI Loaded Notification
 Rayfield:Notify({
     Title = "Script Loaded",
-    Content = "Your Stands Awakening script loaded successfully!",
+    Content = "Stands Awakening Utilities GUI loaded successfully.",
     Duration = 6.5,
-    Image = nil,
-    Actions = {
-        Ignore = {
-            Name = "Okay",
-            Callback = function() end
-        },
-    },
 })
