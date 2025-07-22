@@ -4,13 +4,21 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Parent = PlayerGui
+ScreenGui.Name = "CoordinatesDisplay"
+
+local Frame = Instance.new("Frame")
+Frame.Parent = ScreenGui
+Frame.Position = UDim2.new(0, 10, 0, 10)
+Frame.Size = UDim2.new(0, 300, 0, 30)
+Frame.BackgroundTransparency = 0.5
+Frame.BackgroundColor3 = Color3.new(0, 0, 0)
+Frame.Active = true
+Frame.Draggable = true
 
 local CoordLabel = Instance.new("TextLabel")
-CoordLabel.Parent = ScreenGui
-CoordLabel.Position = UDim2.new(0, 10, 0, 10)
-CoordLabel.Size = UDim2.new(0, 300, 0, 30)
-CoordLabel.BackgroundTransparency = 0.5
-CoordLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+CoordLabel.Parent = Frame
+CoordLabel.Size = UDim2.new(1, 0, 1, 0)
+CoordLabel.BackgroundTransparency = 1
 CoordLabel.TextColor3 = Color3.new(1, 1, 1)
 CoordLabel.TextScaled = true
 CoordLabel.Text = "Loading..."
