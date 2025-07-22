@@ -34,7 +34,7 @@ ItemsTab:CreateButton({
 
                         if not teleported then
                             teleported = true
-                            HumanoidRootPart.CFrame = CFrame.new(-80.54, 3.66, 245.48) -- Replace with actual boss key insertion CFrame if needed
+                            HumanoidRootPart.CFrame = CFrame.new(-80.54, 3.66, 245.48)
                         end
                     end
                 end
@@ -46,19 +46,38 @@ ItemsTab:CreateButton({
 local VisualTab = Window:CreateTab("Visual", 4483362458)
 
 VisualTab:CreateButton({
-    Name = "Enable Fullbright",
+    Name = "Enable Fullbright (Natural)",
     Callback = function()
         local lighting = game:GetService("Lighting")
-        lighting.Ambient = Color3.new(1,1,1)
-        lighting.Brightness = 10
+        lighting.Ambient = Color3.new(0.6,0.6,0.6)
+        lighting.Brightness = 3
         lighting.ClockTime = 12
-        lighting.FogEnd = 100000
+        lighting.FogEnd = 10000
         lighting.GlobalShadows = false
     end,
 })
 
 VisualTab:CreateButton({
-    Name = "FPS Booster (Hide bombs, blue guys, effects)",
+    Name = "FPS Booster (Main Game)",
+    Callback = function()
+        local Workspace = game:GetService("Workspace")
+        for _,v in pairs(Workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
+                v.Enabled = false
+            elseif v:IsA("Decal") or v:IsA("Texture") then
+                v.Transparency = 1
+            elseif v:IsA("MeshPart") or v:IsA("Part") or v:IsA("UnionOperation") then
+                if v.Material ~= Enum.Material.SmoothPlastic then
+                    v.Material = Enum.Material.SmoothPlastic
+                end
+                v.Reflectance = 0
+            end
+        end
+    end,
+})
+
+VisualTab:CreateButton({
+    Name = "FPS Booster (Boss)",
     Callback = function()
         for _,v in pairs(game.Workspace:GetDescendants()) do
             if v:IsA("BasePart") or v:IsA("MeshPart") or v:IsA("Part") then
