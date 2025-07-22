@@ -1,21 +1,51 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Stands Awakening AutoBoss - Made by skulldagrait",
+   Name = "Stands Awakening Hub - Made by skulldagrait",
    LoadingTitle = "Loading...",
    LoadingSubtitle = "By skulldagrait",
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "SA_AutoBoss",
+      FolderName = "SA_Hub",
       FileName = "Config"
    },
    Discord = { Enabled = false },
    KeySystem = false,
 })
 
-local MainTab = Window:CreateTab("Main", 4483362458)
+local ItemsTab = Window:CreateTab("Items", 4483362458)
 
-MainTab:CreateButton({
+ItemsTab:CreateButton({
+    Name = "Auto Pickup Uncanney Key + Teleport (Once)",
+    Callback = function()
+        local teleported = false
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local HumanoidRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local Workspace = game:GetService("Workspace")
+
+        task.spawn(function()
+            while true do
+                task.wait(1)
+                for i,v in pairs(Workspace:GetDescendants()) do
+                    if v:IsA("Tool") and v.Name == "Uncanney Key" then
+                        firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Handle, 0)
+                        firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Handle, 1)
+
+                        if not teleported then
+                            teleported = true
+                            HumanoidRootPart.CFrame = CFrame.new(-80.54, 3.66, 245.48) -- Replace with actual boss key insertion CFrame if needed
+                        end
+                    end
+                end
+            end
+        end)
+    end,
+})
+
+local VisualTab = Window:CreateTab("Visual", 4483362458)
+
+VisualTab:CreateButton({
     Name = "Enable Fullbright",
     Callback = function()
         local lighting = game:GetService("Lighting")
@@ -27,15 +57,25 @@ MainTab:CreateButton({
     end,
 })
 
-MainTab:CreateButton({
-    Name = "Teleport to Boss Lobby",
+VisualTab:CreateButton({
+    Name = "FPS Booster (Hide bombs, blue guys, effects)",
     Callback = function()
-        local TeleportService = game:GetService("TeleportService")
-        TeleportService:Teleport(11423379012)
+        for _,v in pairs(game.Workspace:GetDescendants()) do
+            if v:IsA("BasePart") or v:IsA("MeshPart") or v:IsA("Part") then
+                if v.Name:lower():find("bomb") or v.Name:lower():find("effect") or v.Name:lower():find("blue") then
+                    v.Transparency = 1
+                    if v:FindFirstChild("Decal") then
+                        v.Decal.Transparency = 1
+                    end
+                end
+            end
+        end
     end,
 })
 
-MainTab:CreateButton({
+local BossTab = Window:CreateTab("Boss", 4483362458)
+
+BossTab:CreateButton({
     Name = "Start AutoBoss",
     Callback = function()
         local Players = game:GetService("Players")
@@ -93,24 +133,7 @@ MainTab:CreateButton({
     end,
 })
 
-MainTab:CreateButton({
-    Name = "FPS Booster (Hide bombs, blue guys, effects)",
-    Callback = function()
-        for _,v in pairs(game.Workspace:GetDescendants()) do
-            if v:IsA("BasePart") or v:IsA("MeshPart") or v:IsA("Part") then
-                if v.Name:lower():find("bomb") or v.Name:lower():find("effect") or v.Name:lower():find("blue") then
-                    v.Transparency = 1
-                    if v:FindFirstChild("Decal") then
-                        v.Decal.Transparency = 1
-                    end
-                end
-            end
-        end
-    end,
-})
-
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
-local CreditsSection = CreditsTab:CreateSection("Credits")
 
 CreditsTab:CreateParagraph({
     Title = "Script made by skulldagrait",
