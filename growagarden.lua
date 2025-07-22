@@ -20,7 +20,6 @@ local Window = Rayfield:CreateWindow({
 local Tab = Window:CreateTab("AI", 4483362458)
 local Section = Tab:CreateSection("AI Controls")
 
---// Variables
 local RS = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local VirtualUser = game:GetService("VirtualUser")
@@ -40,7 +39,6 @@ local gears = require(RS.Data.GearData)
 local seedShopUI = player.PlayerGui.Seed_Shop.Frame.ScrollingFrame
 local gearShopUI = player.PlayerGui.Gear_Shop.Frame.ScrollingFrame
 
---// Anti-AFK
 for i,v in pairs(getconnections(player.Idled)) do
     v:Disable()
 end
@@ -54,7 +52,6 @@ task.spawn(function()
     end
 end)
 
---// Functions
 local function getStockAmount(shopUI, itemName)
     for _, frame in ipairs(shopUI:GetChildren()) do
         if frame.Name == itemName then
@@ -136,7 +133,6 @@ local function sellCrops()
     end
 end
 
---// AI Loop
 task.spawn(function()
     while true do
         if AIEnabled then
@@ -155,7 +151,6 @@ task.spawn(function()
     end
 end)
 
---// Rayfield Toggle
 Tab:CreateToggle({
     Name = "Enable AI Mode",
     CurrentValue = false,
@@ -164,9 +159,8 @@ Tab:CreateToggle({
     end,
 })
 
---// Credits Tab
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
-CreditsTab:CreateParagraph({Title = "Credits", Content = "Made by @skulldagrait\nYouTube: youtube.com/@skulldagrait\nDiscord: skulldagrait\nGitHub: github.com/skulldagrait\nDiscord Server: https://discord.gg/wUtef63fms"})
+CreditsTab:CreateParagraph({Title = "Credits", Content = "Made by @skulldagrait\nYouTube: youtube.com/@skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: skulldagrait\nDiscord Server: https://discord.gg/wUtef63fms"})
 
 Rayfield:Notify({
     Title = "Grow A Garden AI Loaded",
