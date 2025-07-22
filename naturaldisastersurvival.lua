@@ -19,13 +19,15 @@ local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local Workspace = game:GetService("Workspace")
 local HRP = Character:WaitForChild("HumanoidRootPart")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local MainTab = Window:CreateTab("Main", 4483362458)
 
 MainTab:CreateButton({
     Name = "No Fall Damage",
     Callback = function()
-        game:GetService("RunService").Stepped:Connect(function()
+        RunService.Stepped:Connect(function()
             if Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
                 Humanoid:ChangeState(Enum.HumanoidStateType.Seated)
                 Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
@@ -38,7 +40,7 @@ MainTab:CreateButton({
 MainTab:CreateButton({
     Name = "Anti Fling / Knockback",
     Callback = function()
-        game:GetService("RunService").Heartbeat:Connect(function()
+        RunService.Heartbeat:Connect(function()
             for _,v in pairs(Character:GetDescendants()) do
                 if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("BodyAngularVelocity") then
                     v:Destroy()
@@ -54,7 +56,7 @@ MainTab:CreateButton({
 MainTab:CreateButton({
     Name = "Auto Sit When Launched",
     Callback = function()
-        game:GetService("RunService").Heartbeat:Connect(function()
+        RunService.Heartbeat:Connect(function()
             if Humanoid.Sit == false and HRP.Velocity.Magnitude > 100 then
                 Humanoid.Sit = true
                 task.wait(0.1)
@@ -62,6 +64,40 @@ MainTab:CreateButton({
             end
         end)
         Rayfield:Notify({Title="NDS Hub",Content="Auto Sit Enabled",Duration=2})
+    end,
+})
+
+MainTab:CreateButton({
+    Name = "Infinite Jump",
+    Callback = function()
+        UserInputService.JumpRequest:Connect(function()
+            Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end)
+        Rayfield:Notify({Title="NDS Hub",Content="Infinite Jump Enabled",Duration=2})
+    end,
+})
+
+local noclipEnabled = false
+
+MainTab:CreateButton({
+    Name = "Toggle Noclip [Press 'N']",
+    Callback = function()
+        UserInputService.InputBegan:Connect(function(input)
+            if input.KeyCode == Enum.KeyCode.N then
+                noclipEnabled = not noclipEnabled
+                Rayfield:Notify({Title="NDS Hub",Content="Noclip: "..tostring(noclipEnabled),Duration=2})
+            end
+        end)
+
+        RunService.Stepped:Connect(function()
+            if noclipEnabled then
+                for _,v in pairs(Character:GetDescendants()) do
+                    if v:IsA("BasePart") and v.CanCollide == true then
+                        v.CanCollide = false
+                    end
+                end
+            end
+        end)
     end,
 })
 
