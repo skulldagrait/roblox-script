@@ -1,7 +1,7 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "Natural Disaster Survival Hub | skulldagrait",
+   Name = "NDS Hub | skulldagrait",
    LoadingTitle = "Loading...",
    LoadingSubtitle = "By skulldagrait",
    ConfigurationSaving = {
@@ -18,21 +18,50 @@ local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
 local Workspace = game:GetService("Workspace")
+local HRP = Character:WaitForChild("HumanoidRootPart")
 
 local MainTab = Window:CreateTab("Main", 4483362458)
 
 MainTab:CreateButton({
-    Name = "God Mode (Infinite Health)",
+    Name = "No Fall Damage",
     Callback = function()
-        Humanoid.Name = "1"
-        local newHumanoid = Humanoid:Clone()
-        newHumanoid.Parent = Character
-        newHumanoid.Name = "Humanoid"
-        task.wait(0.1)
-        Character:FindFirstChild("1"):Destroy()
-        workspace.CurrentCamera.CameraSubject = Character
-        Humanoid = newHumanoid
-        Rayfield:Notify({Title="NDS Hub",Content="God Mode Enabled",Duration=2})
+        game:GetService("RunService").Stepped:Connect(function()
+            if Humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+                Humanoid:ChangeState(Enum.HumanoidStateType.Seated)
+                Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+            end
+        end)
+        Rayfield:Notify({Title="NDS Hub",Content="No Fall Damage Enabled",Duration=2})
+    end,
+})
+
+MainTab:CreateButton({
+    Name = "Anti Fling / Knockback",
+    Callback = function()
+        game:GetService("RunService").Heartbeat:Connect(function()
+            for _,v in pairs(Character:GetDescendants()) do
+                if v:IsA("BodyVelocity") or v:IsA("BodyForce") or v:IsA("BodyAngularVelocity") then
+                    v:Destroy()
+                end
+            end
+            HRP.Velocity = Vector3.new(0,HRP.Velocity.Y,0)
+            HRP.RotVelocity = Vector3.new(0,0,0)
+        end)
+        Rayfield:Notify({Title="NDS Hub",Content="Anti Fling/Knockback Enabled",Duration=2})
+    end,
+})
+
+MainTab:CreateButton({
+    Name = "Auto Sit When Launched",
+    Callback = function()
+        game:GetService("RunService").Heartbeat:Connect(function()
+            if Humanoid.Sit == false and HRP.Velocity.Magnitude > 100 then
+                Humanoid.Sit = true
+                task.wait(0.1)
+                Humanoid.Sit = false
+            end
+        end)
+        Rayfield:Notify({Title="NDS Hub",Content="Auto Sit Enabled",Duration=2})
     end,
 })
 
@@ -53,39 +82,6 @@ MainTab:CreateSlider({
     CurrentValue = 50,
     Callback = function(Value)
         Humanoid.JumpPower = Value
-    end,
-})
-
-MainTab:CreateButton({
-    Name = "Teleport to Map",
-    Callback = function()
-        for _,v in pairs(Workspace:GetChildren()) do
-            if v.Name == "Map" then
-                LocalPlayer.Character:MoveTo(v.Position or v:GetModelCFrame().p)
-                break
-            end
-        end
-    end,
-})
-
-MainTab:CreateButton({
-    Name = "Teleport to Lobby",
-    Callback = function()
-        LocalPlayer.Character:MoveTo(Vector3.new(0, 181, 0))
-    end,
-})
-
-MainTab:CreateButton({
-    Name = "No Fall Damage",
-    Callback = function()
-        local old; old = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-            local args = {...}
-            if getnamecallmethod() == "FireServer" and tostring(self) == "HumanoidStateType" then
-                return
-            end
-            return old(self, unpack(args))
-        end))
-        Rayfield:Notify({Title="NDS Hub",Content="No Fall Damage Enabled",Duration=2})
     end,
 })
 
