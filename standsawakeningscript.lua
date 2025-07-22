@@ -146,59 +146,18 @@ BossTab:CreateButton({
 
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 
-TeleportTab:CreateButton({
-    Name = "Waterfall (Uncanney Key spawn)",
-    Callback = function()
-        if HumanoidRootPart then
-            HumanoidRootPart.CFrame = CFrame.new(-350.72, -14.55, 58.64)
-        end
-    end,
-})
-
-TeleportTab:CreateButton({
-    Name = "Doghouse (Uncanney Key spawn)",
-    Callback = function()
-        if HumanoidRootPart then
-            HumanoidRootPart.CFrame = CFrame.new(270.15, 3.67, 82.33)
-        end
-    end,
-})
-
-TeleportTab:CreateButton({
-    Name = "Boss Key Insert Area",
-    Callback = function()
-        if HumanoidRootPart then
-            HumanoidRootPart.CFrame = CFrame.new(-80.54, 3.66, 245.48)
-        end
-    end,
-})
-
-TeleportTab:CreateButton({
-    Name = "Merchant NPC",
-    Callback = function()
-        if HumanoidRootPart then
-            HumanoidRootPart.CFrame = CFrame.new(100.25, 3.55, 120.66)
-        end
-    end,
-})
-
-TeleportTab:CreateButton({
-    Name = "Stand Storage NPC",
-    Callback = function()
-        if HumanoidRootPart then
-            HumanoidRootPart.CFrame = CFrame.new(-10.45, 3.55, 150.22)
-        end
-    end,
-})
-
-TeleportTab:CreateButton({
-    Name = "Arrow Shop NPC",
-    Callback = function()
-        if HumanoidRootPart then
-            HumanoidRootPart.CFrame = CFrame.new(55.12, 3.55, 95.33)
-        end
-    end,
-})
+TeleportTab:CreateButton({ Name = "Timmy NPC", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1394, 584, -219) end end })
+TeleportTab:CreateButton({ Name = "Tim NPC", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1399, 584, -216) end end })
+TeleportTab:CreateButton({ Name = "Tom NPC", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1343, 587, -554) end end })
+TeleportTab:CreateButton({ Name = "Sans NPC", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1045, 583, -442) end end })
+TeleportTab:CreateButton({ Name = "Donation Leaderboard", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1670, 583, -506) end end })
+TeleportTab:CreateButton({ Name = "Waterfall (Uncanney Key spawn)", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1625, 578, -747) end end })
+TeleportTab:CreateButton({ Name = "Doghouse (Uncanney Key spawn)", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1033, 583, -178) end end })
+TeleportTab:CreateButton({ Name = "Arena", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1248, 583, -280) end end })
+TeleportTab:CreateButton({ Name = "Key Portal", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1093, 583, -699) end end })
+TeleportTab:CreateButton({ Name = "Stand/Rokaka/Arrow Farm", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(-339, 461, -1514) end end })
+TeleportTab:CreateButton({ Name = "Main Area (Middle of map)", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(1341, 583, -482) end end })
+TeleportTab:CreateButton({ Name = "D4C Location", Callback = function() if HumanoidRootPart then HumanoidRootPart.CFrame = CFrame.new(-3070, 464, -421) end end })
 
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
 
