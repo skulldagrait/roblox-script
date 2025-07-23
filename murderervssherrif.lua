@@ -20,7 +20,7 @@ local ShowNames = false
 -- UI Setup
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
-    Name = "MVS Hub - Codex Edition",
+    Name = "Murderer VS Sherrif Script - by skulldagrait",
     LoadingTitle = "Loading...",
     LoadingSubtitle = "By skulldagrait",
     ConfigurationSaving = {
