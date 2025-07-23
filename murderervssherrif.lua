@@ -1,22 +1,5 @@
---// Murder VS Sheriff Hub - Made by skulldagrait
--- YouTube: youtube.com/@skulldagrait
+-- Murder VS Sheriff Hub (Codex Edition) by skulldagrait
 -- GitHub: github.com/skulldagrait
--- Discord: discord.gg/wUtef63fms
-
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-
-local Window = Rayfield:CreateWindow({
-    Name = "Murder VS Sheriff Hub - skulldagrait",
-    LoadingTitle = "Loading...",
-    LoadingSubtitle = "Optimized for Codex",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "MVS_Hub",
-        FileName = "Config"
-    },
-    Discord = { Enabled = false },
-    KeySystem = false,
-})
 
 -- Services
 local Players = game:GetService("Players")
@@ -26,83 +9,65 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 
--- States
-local AimbotEnabled = false
-local SilentAimEnabled = false
-local ESPEnabled = false
-local TracersEnabled = false
-local NameEnabled = false
+-- Feature Flags
+local Aimbot = false
+local Silent = false
+local AutoKill = false
+local ExpandHitbox = false
+local ESP = false
+local ShowNames = false
 
-local ESPObjects = {}
-
--- Tabs
-local CombatTab = Window:CreateTab("Combat", 4483362458)
-CombatTab:CreateToggle({
-    Name = "Aimbot (Visible Only)",
-    CurrentValue = false,
-    Callback = function(Value)
-        AimbotEnabled = Value
-    end
+-- UI Setup
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local Window = Rayfield:CreateWindow({
+    Name = "MVS Hub - Codex Edition",
+    LoadingTitle = "Loading...",
+    LoadingSubtitle = "By skulldagrait",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "MVS_Hub",
+        FileName = "Config"
+    },
+    KeySystem = false
 })
 
-CombatTab:CreateToggle({
-    Name = "Silent Aim (Beta)",
-    CurrentValue = false,
-    Callback = function(Value)
-        SilentAimEnabled = Value
-    end
-})
+-- Combat Tab
+local Combat = Window:CreateTab("Combat", 4483362458)
+Combat:CreateToggle({ Name = "Aimbot (Visible Only)", CurrentValue = false, Callback = function(v) Aimbot = v end })
+Combat:CreateToggle({ Name = "Silent Aim (Smooth)", CurrentValue = false, Callback = function(v) Silent = v end })
+Combat:CreateToggle({ Name = "Auto Kill (Auto Shoot)", CurrentValue = false, Callback = function(v) AutoKill = v end })
+Combat:CreateToggle({ Name = "Hitbox Extender", CurrentValue = false, Callback = function(v) ExpandHitbox = v end })
 
+-- ESP Tab
 local ESPTab = Window:CreateTab("ESP", 4483362458)
-ESPTab:CreateToggle({
-    Name = "Enable ESP",
-    CurrentValue = false,
-    Callback = function(Value)
-        ESPEnabled = Value
-    end
-})
+ESPTab:CreateToggle({ Name = "Enable ESP", CurrentValue = false, Callback = function(v) ESP = v end })
+ESPTab:CreateToggle({ Name = "Show Player Names", CurrentValue = false, Callback = function(v) ShowNames = v end })
 
-ESPTab:CreateToggle({
-    Name = "Show Tracers",
-    CurrentValue = false,
-    Callback = function(Value)
-        TracersEnabled = Value
-    end
-})
-
-ESPTab:CreateToggle({
-    Name = "Show Player Names",
-    CurrentValue = false,
-    Callback = function(Value)
-        NameEnabled = Value
-    end
-})
-
+-- Credits
 local UITab = Window:CreateTab("Credits", 4483362458)
 UITab:CreateParagraph({
-    Title = "Script by skulldagrait",
-    Content = "YT: youtube.com/@skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: skulldagrait\nServer: discord.gg/wUtef63fms"
+    Title = "By skulldagrait",
+    Content = "YT: @skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: discord.gg/wUtef63fms"
 })
 
--- Utility
+-- Utility Functions
 local function isVisible(part)
     local origin = Camera.CFrame.Position
-    local direction = (part.Position - origin).Unit * 1000
+    local direction = (part.Position - origin).Unit * 500
     local ray = Ray.new(origin, direction)
-    local hitPart = Workspace:FindPartOnRay(ray, LocalPlayer.Character)
-    return hitPart and part:IsDescendantOf(hitPart.Parent)
+    local hit = Workspace:FindPartOnRay(ray, LocalPlayer.Character, false, true)
+    return hit and part:IsDescendantOf(hit.Parent)
 end
 
-local function getClosestPlayer()
-    local closest, shortest = nil, math.huge
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local part = player.Character.HumanoidRootPart
-            if isVisible(part) then
-                local dist = (part.Position - Camera.CFrame.Position).Magnitude
-                if dist < shortest then
-                    closest = player
-                    shortest = dist
+local function getClosestEnemy()
+    local closest, dist = nil, math.huge
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local root = p.Character.HumanoidRootPart
+            if isVisible(root) then
+                local d = (Camera.CFrame.Position - root.Position).Magnitude
+                if d < dist then
+                    closest, dist = p, d
                 end
             end
         end
@@ -110,89 +75,98 @@ local function getClosestPlayer()
     return closest
 end
 
--- Aimbot Loop
+-- Hitbox Extender
 RunService.RenderStepped:Connect(function()
-    if AimbotEnabled then
-        local target = getClosestPlayer()
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.HumanoidRootPart.Position)
-        end
-    end
-end)
-
--- Silent Aim (Simulated)
-RunService.RenderStepped:Connect(function()
-    if SilentAimEnabled then
-        local target = getClosestPlayer()
-        if target then
-            -- This is just visual lock-on, not packet/shot hijacking
-            print("[Silent Aim] Targeting: " .. target.Name)
-        end
-    end
-end)
-
--- ESP Builder
-local function createESP(player)
-    if ESPObjects[player] then return end
-    local espHolder = Instance.new("BillboardGui")
-    espHolder.Name = "ESP"
-    espHolder.Size = UDim2.new(4, 0, 5, 0)
-    espHolder.AlwaysOnTop = true
-    espHolder.Adornee = player.Character:WaitForChild("HumanoidRootPart")
-    espHolder.Parent = player.Character
-
-    local tracer = Instance.new("Frame")
-    tracer.Name = "Tracer"
-    tracer.Size = UDim2.new(0, 2, 1, 0)
-    tracer.BackgroundColor3 = Color3.new(1, 0, 0)
-    tracer.Position = UDim2.new(0.5, -1, 0, 0)
-    tracer.AnchorPoint = Vector2.new(0.5, 0)
-    tracer.BackgroundTransparency = 0.3
-    tracer.Visible = TracersEnabled
-    tracer.Parent = espHolder
-
-    local name = Instance.new("TextLabel")
-    name.Name = "NameTag"
-    name.Text = player.Name
-    name.BackgroundTransparency = 1
-    name.TextColor3 = Color3.new(1, 1, 1)
-    name.TextStrokeTransparency = 0
-    name.Size = UDim2.new(1, 0, 0.25, 0)
-    name.Position = UDim2.new(0, 0, -0.5, 0)
-    name.Visible = NameEnabled
-    name.Parent = espHolder
-
-    ESPObjects[player] = espHolder
-end
-
-local function updateESP()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            if ESPEnabled then
-                createESP(player)
-                local gui = ESPObjects[player]
-                if gui then
-                    gui.Enabled = true
-                    gui.Tracer.Visible = TracersEnabled
-                    gui.NameTag.Visible = NameEnabled
+    for _, p in pairs(Players:GetPlayers()) do
+        if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local part = p.Character.HumanoidRootPart
+            local existing = part:FindFirstChild("Resizer")
+            if ExpandHitbox then
+                if not existing then
+                    local box = Instance.new("SelectionBox", part)
+                    box.Name = "Resizer"
+                    box.Adornee = part
+                    box.LineThickness = 0
+                    part.Size = Vector3.new(8, 8, 8)
+                    part.Transparency = 0.5
+                    part.Material = Enum.Material.ForceField
                 end
-            elseif ESPObjects[player] then
-                ESPObjects[player]:Destroy()
-                ESPObjects[player] = nil
+            elseif existing then
+                part.Size = Vector3.new(2, 2, 1)
+                part.Transparency = 0
+                part.Material = Enum.Material.Plastic
+                existing:Destroy()
             end
         end
     end
-end
+end)
 
--- ESP Loop
-RunService.RenderStepped:Connect(updateESP)
+-- Main Loop: Aim + AutoKill
+RunService.RenderStepped:Connect(function()
+    local target = getClosestEnemy()
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local root = target.Character.HumanoidRootPart
 
--- Cleanup on leave
-Players.PlayerRemoving:Connect(function(player)
-    if ESPObjects[player] then
-        ESPObjects[player]:Destroy()
-        ESPObjects[player] = nil
+        if Aimbot then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, root.Position)
+        elseif Silent then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, root.Position), 0.15)
+        end
+
+        if AutoKill then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, root.Position)
+            mouse1press()
+            task.wait(0.05)
+            mouse1release()
+        end
     end
 end)
 
-print("✅ MVS GUI Loaded | By skulldagrait")
+-- ESP System
+local ESPList = {}
+RunService.RenderStepped:Connect(function()
+    if ESP then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+                if not ESPList[p] then
+                    local tag = Instance.new("BillboardGui", p.Character.Head)
+                    tag.Name = "ESP"
+                    tag.Size = UDim2.new(0, 200, 0, 50)
+                    tag.Adornee = p.Character.Head
+                    tag.AlwaysOnTop = true
+                    tag.StudsOffset = Vector3.new(0, 2, 0)
+
+                    local label = Instance.new("TextLabel", tag)
+                    label.Size = UDim2.new(1, 0, 1, 0)
+                    label.BackgroundTransparency = 1
+                    label.TextColor3 = Color3.new(1, 0, 0)
+                    label.TextStrokeTransparency = 0
+                    label.TextScaled = true
+                    label.Font = Enum.Font.SourceSansBold
+                    label.Text = ShowNames and p.Name or "ENEMY"
+
+                    ESPList[p] = tag
+                else
+                    local tag = ESPList[p]
+                    tag.TextLabel.Text = ShowNames and p.Name or "ENEMY"
+                    tag.Enabled = true
+                end
+            end
+        end
+    else
+        for _, tag in pairs(ESPList) do
+            if tag then tag:Destroy() end
+        end
+        ESPList = {}
+    end
+end)
+
+-- Clean up on leave
+Players.PlayerRemoving:Connect(function(plr)
+    if ESPList[plr] then
+        ESPList[plr]:Destroy()
+        ESPList[plr] = nil
+    end
+end)
+
+print("✅ MVS Hub Fully Loaded with AutoKill ✅")
