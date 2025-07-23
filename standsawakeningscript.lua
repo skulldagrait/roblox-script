@@ -18,6 +18,7 @@ local LocalPlayer = Players.LocalPlayer
 local HumanoidRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 local Workspace = game:GetService("Workspace")
 
+-- Items Tab
 local ItemsTab = Window:CreateTab("Items", 4483362458)
 
 ItemsTab:CreateButton({
@@ -42,6 +43,7 @@ ItemsTab:CreateButton({
     end,
 })
 
+-- Visual Tab
 local VisualTab = Window:CreateTab("Visual", 4483362458)
 
 VisualTab:CreateButton({
@@ -90,6 +92,7 @@ VisualTab:CreateButton({
     end,
 })
 
+-- Boss Tab
 local BossTab = Window:CreateTab("Boss", 4483362458)
 
 BossTab:CreateButton({
@@ -113,7 +116,7 @@ BossTab:CreateButton({
             Sword.GripPos = Vector3.new(0,0,0)
             LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):UnequipTools()
             LocalPlayer.Backpack["KnightsSword"].Parent = LocalPlayer.Character
-            Sword.Handle.Size = Vector3.new(1000, 1000, 1000) -- MASSIVE HITBOX
+            Sword.Handle.Size = Vector3.new(1000, 1000, 1000)
         end
 
         -- Dodge System
@@ -137,7 +140,7 @@ BossTab:CreateButton({
         -- Auto Movement
         task.spawn(function()
             while Attacking.Value == false do
-                task.wait(0.1) -- 2x faster
+                task.wait(0.1)
                 if Obby.Value == true then
                     HumanoidRootPart.CFrame = CFrame.new(20.4561386, 113.245972, 196.61351)
                 else
@@ -153,7 +156,7 @@ BossTab:CreateButton({
             end
         end)
 
-        -- Auto Attack (2x faster)
+        -- Auto Attack
         task.spawn(function()
             while Attacking.Value == false do
                 task.wait(0.1)
@@ -167,6 +170,34 @@ BossTab:CreateButton({
     end,
 })
 
+-- Teleport Tab
+local TeleportTab = Window:CreateTab("Teleports", 4483362458)
+
+local function createTeleport(name, position)
+    TeleportTab:CreateButton({
+        Name = name,
+        Callback = function()
+            if HumanoidRootPart then
+                HumanoidRootPart.CFrame = CFrame.new(unpack(position))
+            end
+        end,
+    })
+end
+
+createTeleport("Timmy NPC", {1394, 584, -219})
+createTeleport("Tim NPC", {1399, 584, -216})
+createTeleport("Tom NPC", {1343, 587, -554})
+createTeleport("Sans NPC", {1045, 583, -442})
+createTeleport("Donation Leaderboard", {1670, 583, -506})
+createTeleport("Waterfall (Uncanney Key spawn)", {1625, 578, -747})
+createTeleport("Doghouse (Uncanney Key spawn)", {1033, 583, -178})
+createTeleport("Arena", {1248, 583, -280})
+createTeleport("Key Portal", {1093, 583, -699})
+createTeleport("Stand/Rokaka/Arrow Farm", {-339, 461, -1514})
+createTeleport("Main Area (Middle of map)", {1341, 583, -482})
+createTeleport("D4C Location", {-3070, 464, -421})
+
+-- Credits Tab
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
 
 CreditsTab:CreateParagraph({
