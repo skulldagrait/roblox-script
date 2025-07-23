@@ -42,7 +42,9 @@ end
 -- Items Tab
 local ItemsTab = Window:CreateTab("Items", 4483362458)
 getgenv().AutoFarmItems = false
+getgenv().AutoCollectBanknote = false
 local rareItems = {"DIO's Diary", "Requiem Arrow", "Camera", "Bone", "Stone Mask"}
+
 ItemsTab:CreateToggle({
   Name = "AutoFarm All Items (Full Map)",
   CurrentValue = false,
@@ -51,15 +53,35 @@ ItemsTab:CreateToggle({
     while getgenv().AutoFarmItems do
       task.wait(0.5)
       for _,item in pairs(workspace:GetDescendants()) do
-        if item:IsA("Tool") and item:FindFirstChild("Handle") then
+        if item:IsA("Tool") and item:FindFirstChild("Handle") and not item.Parent:FindFirstChildOfClass("Humanoid") then
           LocalPlayer.Character.HumanoidRootPart.CFrame = item.Handle.CFrame + Vector3.new(0,2,0)
           if table.find(rareItems, item.Name) then
             Rayfield:Notify({
-              Title = "Rare Item Collected!",
-              Content = "You just got a rare item: " .. item.Name .. "\nConsider storing it in your bank.",
+              Title = "High-Value Item Collected",
+              Content = "You picked up: " .. item.Name .. "\nConsider storing it in your bank.",
               Duration = 6
             })
           end
+        end
+      end
+    end
+  end,
+})
+
+ItemsTab:CreateToggle({
+  Name = "Auto Collect Banknote",
+  CurrentValue = false,
+  Callback = function(v)
+    getgenv().AutoCollectBanknote = v
+    while getgenv().AutoCollectBanknote do
+      task.wait(1)
+      local backpack = LocalPlayer:FindFirstChild("Backpack")
+      if backpack then
+        local banknote = backpack:FindFirstChild("Banknote")
+        if banknote then
+          LocalPlayer.Character.Humanoid:EquipTool(banknote)
+          task.wait(0.5)
+          fireclickdetector(banknote:FindFirstChildOfClass("ClickDetector"))
         end
       end
     end
