@@ -1,5 +1,5 @@
 -- Stands Awakening Hub – by skulldagrait
--- Version v1.0
+-- Version v1.1
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
@@ -46,6 +46,7 @@ local rareItems = {
   ["Pot"] = true,
   ["Dio's Skull"] = true,
   ["Uncanny Key"] = true,
+  ["Samurai Diary"] = true,
 }
 local veryRareItems = {
   ["Canny Key"] = true,
