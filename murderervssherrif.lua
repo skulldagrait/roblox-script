@@ -1,33 +1,35 @@
---// Murder VS Sherrif | by skulldagrait
--- Requires Rayfield UI Library and basic exploit environment
--- Place this in your GitHub repo and run with: loadstring(game:HttpGet("https://raw.githubusercontent.com/skulldagrait/Roblox-scripts/main/murdersvssherrifs.lua"))()
+--// Murder VS Sheriff Hub - Made by skulldagrait
+-- YouTube: youtube.com/@skulldagrait
+-- GitHub: github.com/skulldagrait
+-- Discord: skulldagrait | discord.gg/wUtef63fms
 
--- Load Rayfield (must be executed in environment with exploit support)
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local ESPEnabled = false
-local TracersEnabled = false
-local NameEnabled = false
-local HealthEnabled = false
-local SilentAimEnabled = false
-local AimbotEnabled = false
-
--- UI Setup
 local Window = Rayfield:CreateWindow({
-    Name = "Murder VS Sherrif | by skulldagrait",
-    LoadingTitle = "Initializing GUI...",
-    LoadingSubtitle = "Please wait",
-    ConfigurationSaving = {
-        Enabled = false
-    },
-    Discord = {
-        Enabled = false
-    },
-    KeySystem = false
+   Name = "Murder VS Sheriff Hub - Made by skulldagrait",
+   LoadingTitle = "Loading...",
+   LoadingSubtitle = "By skulldagrait",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "MVS_Hub",
+      FileName = "Config"
+   },
+   Discord = { Enabled = false },
+   KeySystem = false,
 })
 
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local Camera = Workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+-- Variables
+local ESPEnabled, TracersEnabled, NameEnabled, HealthEnabled, SilentAimEnabled, AimbotEnabled = false, false, false, false, false, false
+
 -- Combat Tab
-local CombatTab = Window:CreateTab("Combat")
+local CombatTab = Window:CreateTab("Combat", 4483362458)
 
 CombatTab:CreateToggle({
     Name = "Silent Aim",
@@ -38,7 +40,7 @@ CombatTab:CreateToggle({
 })
 
 CombatTab:CreateToggle({
-    Name = "Aimbot (Locks on when visible)",
+    Name = "Aimbot (Locks on target)",
     CurrentValue = false,
     Callback = function(Value)
         AimbotEnabled = Value
@@ -46,7 +48,7 @@ CombatTab:CreateToggle({
 })
 
 -- ESP Tab
-local ESPTab = Window:CreateTab("ESP")
+local ESPTab = Window:CreateTab("ESP", 4483362458)
 
 ESPTab:CreateToggle({
     Name = "Enable ESP",
@@ -81,30 +83,21 @@ ESPTab:CreateToggle({
 })
 
 -- UI Tab
-local UITab = Window:CreateTab("UI")
-UITab:CreateParagraph({Title = "Credits", Content = "Script by @skulldagrait on GitHub\nHosted in 'Roblox-scripts' repo"})
+local UITab = Window:CreateTab("Credits", 4483362458)
 
--- Minimize Button
-UITab:CreateButton({
-    Name = "Minimize UI",
-    Callback = function()
-        Rayfield:Toggle()
-    end
+UITab:CreateParagraph({
+    Title = "Script made by skulldagrait",
+    Content = "YouTube: youtube.com/@skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: skulldagrait\nDiscord Server: discord.gg/wUtef63fms"
 })
 
--- Core ESP and Aimbot Logic (basic stubs; extendable)
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-
+-- Aimbot System
 local function getClosestPlayer()
-    local closest = nil
-    local shortestDistance = math.huge
+    local closest, shortestDistance = nil, math.huge
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+            local pos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
             if onScreen then
-                local distance = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
+                local distance = (Vector2.new(pos.X, pos.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
                 if distance < shortestDistance then
                     closest = player
                     shortestDistance = distance
@@ -117,14 +110,16 @@ end
 
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled then
-        local closest = getClosestPlayer()
-        if closest and closest.Character and closest.Character:FindFirstChild("HumanoidRootPart") then
-            workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, closest.Character.HumanoidRootPart.Position)
+        local target = getClosestPlayer()
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.HumanoidRootPart.Position)
         end
     end
 end)
 
--- Silent Aim / ESP (basic placeholders)
--- These systems can be extended using drawing APIs or custom overlays
--- Placeholder implementation until ESP module added
-print("Murder VS Sherrif GUI loaded by skulldagrait")
+-- Silent Aim placeholder (implement your resolver/hit registration hook later)
+if SilentAimEnabled then
+    print("Silent Aim is enabled (setup resolver hook for function)")
+end
+
+print("Murder VS Sheriff GUI loaded by skulldagrait")
