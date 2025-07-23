@@ -1,16 +1,12 @@
 -- Stands Awakening Hub – by skulldagrait
--- Version v1.7
+-- Version v1.8
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
   Name = "Stands Awakening Hub – by skulldagrait",
   LoadingTitle = "Loading...",
   LoadingSubtitle = "By skulldagrait",
-  ConfigurationSaving = {
-    Enabled = true,
-    FolderName = "SA_Hub",
-    FileName = "Config"
-  },
+  ConfigurationSaving = { Enabled = true, FolderName = "SA_Hub", FileName = "Config" },
   Discord = { Enabled = false },
   KeySystem = false,
 })
@@ -19,49 +15,36 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-
-local Humanoid
-local function updateHumanoid()
-  if LocalPlayer.Character then
-    Humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-  end
-end
-updateHumanoid()
-LocalPlayer.CharacterAdded:Connect(function()
-  wait(1)
-  updateHumanoid()
-end)
+local Lighting = game:GetService("Lighting")
 
 local rareItems = {
-  ["Camera"] = true, ["Pot"] = true, ["Dio's Skull"] = true,
-  ["Uncanny Key"] = true, ["Samurai Diary"] = true
+  ["Camera"] = true, ["Pot"] = true, ["Dio's Skull"] = true, ["Uncanny Key"] = true,
+  ["Samurai Diary"] = true
 }
-local veryRareItems = { ["Canny Key"] = true }
+local veryRareItems = {
+  ["Canny Key"] = true
+}
 
-local ignoredPos = Vector3.new(-225, 461, -1396)
-
--- Tabs
-local TeleportTab = Window:CreateTab("Teleport", 4483362458)
-local ItemsTab = Window:CreateTab("Items", 4483362458)
-local BossTab = Window:CreateTab("Boss", 4483362458)
-local MovementTab = Window:CreateTab("Movement", 4483362458)
-local VisualsTab = Window:CreateTab("Visuals", 4483362458)
-local MiscTab = Window:CreateTab("Misc", 4483362458)
-
--- Version Display
-for _,tab in pairs({TeleportTab, ItemsTab, BossTab, MovementTab, VisualsTab, MiscTab}) do
-  tab:CreateParagraph({ Title = "Version", Content = "v1.7" })
+local function updateHumanoid()
+  if LocalPlayer.Character then
+    return LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+  end
 end
 
--- Teleports
+local function showVersion(tab)
+  tab:CreateParagraph({ Title = "Version", Content = "v1.8" })
+end
+
+-- TELEPORT TAB
+local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 local teleports = {
   {"Timmy NPC", Vector3.new(1394,584,-219)},
-  {"Tim NPC",   Vector3.new(1399,584,-216)},
-  {"Tom NPC",   Vector3.new(1343,587,-554)},
-  {"Sans NPC",  Vector3.new(1045,583,-442)},
+  {"Tim NPC", Vector3.new(1399,584,-216)},
+  {"Tom NPC", Vector3.new(1343,587,-554)},
+  {"Sans NPC", Vector3.new(1045,583,-442)},
   {"Donation Leaderboard", Vector3.new(1670,583,-506)},
   {"Waterfall (Key spawn)", Vector3.new(1625,578,-747)},
-  {"Doghouse (Key spawn)",  Vector3.new(1033,583,-178)},
+  {"Doghouse (Key spawn)", Vector3.new(1033,583,-178)},
   {"Arena", Vector3.new(1248,583,-280)},
   {"Key Portal", Vector3.new(1093,583,-699)},
   {"Stand/Arrow Farm", Vector3.new(-339,461,-1514)},
@@ -78,8 +61,43 @@ for _,tp in ipairs(teleports) do
     end
   })
 end
+showVersion(TeleportTab)
 
--- Item AutoFarm
+-- BOSS TAB
+local BossTab = Window:CreateTab("Boss", 4483362458)
+BossTab:CreateToggle({
+  Name = "AutoBoss (v1.8)",
+  CurrentValue = false,
+  Callback = function(v)
+    getgenv().AutoBoss = v
+    task.spawn(function()
+      while getgenv().AutoBoss do
+        task.wait(1)
+        for _, obj in ipairs(workspace:GetDescendants()) do
+          if obj:IsA("ProximityPrompt") then
+            fireproximityprompt(obj)
+            break
+          elseif obj:IsA("ClickDetector") then
+            fireclickdetector(obj)
+            break
+          end
+        end
+        task.wait(3)
+        for _, mob in ipairs(workspace:GetChildren()) do
+          local hum = mob:FindFirstChildOfClass("Humanoid")
+          if hum and mob.Name:lower():find("boss") then
+            hum.Health = 0
+          end
+        end
+      end
+    end)
+  end
+})
+showVersion(BossTab)
+
+-- ITEMS TAB
+local ItemsTab = Window:CreateTab("Items", 4483362458)
+local ignoredPos = Vector3.new(-225, 461, -1396)
 ItemsTab:CreateToggle({
   Name = "AutoFarm All Items",
   CurrentValue = true,
@@ -99,21 +117,21 @@ ItemsTab:CreateToggle({
     end)
   end
 })
-
 ItemsTab:CreateToggle({
-  Name = "Auto Collect Banknote (anywhere)",
+  Name = "Auto Collect Banknote",
   CurrentValue = true,
   Callback = function(v)
     getgenv().AutoBanknote = v
     task.spawn(function()
       while getgenv().AutoBanknote do
         task.wait(1)
-        for _,inv in pairs({LocalPlayer.Backpack, LocalPlayer.Character}) do
-          if inv then
-            local note = inv:FindFirstChild("Banknote")
-            if note then
+        local inv = LocalPlayer:GetChildren()
+        for _,cont in pairs(inv) do
+          if cont:IsA("Backpack") or cont:IsA("Model") then
+            local note = cont:FindFirstChild("Banknote")
+            if note and note:IsA("Tool") then
               LocalPlayer.Character.Humanoid:EquipTool(note)
-              wait(0.2)
+              task.wait(0.25)
               pcall(function() note:Activate() end)
             end
           end
@@ -122,8 +140,6 @@ ItemsTab:CreateToggle({
     end)
   end
 })
-
--- Rare item notify
 task.spawn(function()
   while true do
     task.wait(5)
@@ -137,138 +153,65 @@ task.spawn(function()
     end
   end
 end)
+showVersion(ItemsTab)
 
--- AutoBoss
-BossTab:CreateToggle({
-  Name = "Start AutoBoss",
+-- MOVEMENT TAB
+local MovementTab = Window:CreateTab("Movement", 4483362458)
+MovementTab:CreateToggle({
+  Name = "Fly",
   CurrentValue = false,
   Callback = function(v)
-    getgenv().AutoBoss = v
-    task.spawn(function()
-      while getgenv().AutoBoss do
-        task.wait(2)
-        -- Trigger boss event by touching the key portal if it exists
-        local portal = workspace:FindFirstChild("KeyPortal")
-        if portal and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-          LocalPlayer.Character.HumanoidRootPart.CFrame = portal.CFrame + Vector3.new(0, 3, 0)
-          task.wait(2)
-        end
-        -- Kill boss
-        for _,mob in pairs(workspace:GetChildren()) do
-          if mob:FindFirstChildOfClass("Humanoid") and mob.Name:lower():find("boss") then
-            mob:FindFirstChildOfClass("Humanoid").Health = 0
-          end
-        end
-      end
-    end)
-  end
-})
-
-BossTab:CreateButton({
-  Name = "Kill Nearest Boss",
-  Callback = function()
-    for _,mob in pairs(workspace:GetChildren()) do
-      if mob:FindFirstChildOfClass("Humanoid") and mob.Name:lower():find("boss") then
-        mob:FindFirstChildOfClass("Humanoid").Health = 0
-      end
+    getgenv().Flying = v
+    local bodyGyro, bodyVel
+    local hrp = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+    if v then
+      bodyGyro = Instance.new("BodyGyro", hrp)
+      bodyGyro.P = 9e4
+      bodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+      bodyGyro.cframe = hrp.CFrame
+      bodyVel = Instance.new("BodyVelocity", hrp)
+      bodyVel.velocity = Vector3.zero
+      bodyVel.maxForce = Vector3.new(9e9, 9e9, 9e9)
+      RunService.RenderStepped:Connect(function()
+        if not getgenv().Flying then return end
+        local move = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += hrp.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then move -= hrp.CFrame.LookVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then move -= hrp.CFrame.RightVector end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += hrp.CFrame.RightVector end
+        move += Vector3.new(0, 0.5, 0)
+        bodyVel.velocity = move * 50
+        bodyGyro.cframe = hrp.CFrame
+      end)
+    else
+      if bodyGyro then bodyGyro:Destroy() end
+      if bodyVel then bodyVel:Destroy() end
     end
   end
 })
-
--- Movement
-MovementTab:CreateToggle({
-  Name = "Speed Boost",
-  CurrentValue = false,
-  Callback = function(v)
-    getgenv().SpeedBoost = v
-    RunService.RenderStepped:Connect(function()
-      if getgenv().SpeedBoost and Humanoid then
-        Humanoid.WalkSpeed = 45
-      elseif Humanoid then
-        Humanoid.WalkSpeed = 16
-      end
-    end)
-  end
-})
-
-MovementTab:CreateToggle({
-  Name = "Jump Boost",
-  CurrentValue = false,
-  Callback = function(v)
-    getgenv().JumpBoost = v
-    RunService.RenderStepped:Connect(function()
-      if getgenv().JumpBoost and Humanoid then
-        Humanoid.JumpPower = 100
-      elseif Humanoid then
-        Humanoid.JumpPower = 50
-      end
-    end)
-  end
-})
-
-MovementTab:CreateButton({
-  Name = "Enable Fly (toggle)",
-  Callback = function()
-    loadstring(game:HttpGet("https://pastebin.com/raw/XPHk92R3"))()
-  end
-})
-
 MovementTab:CreateToggle({
   Name = "Infinite Jump",
   CurrentValue = false,
   Callback = function(v)
     getgenv().InfJump = v
-    UserInputService.JumpRequest:Connect(function()
-      if getgenv().InfJump and LocalPlayer.Character then
-        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-      end
-    end)
   end
 })
-
--- Visuals
-VisualsTab:CreateToggle({
-  Name = "Enable Fullbright",
-  CurrentValue = false,
-  Callback = function(v)
-    Lighting.Brightness = v and 3 or 1
-    Lighting.ClockTime = v and 12 or 14
+UserInputService.JumpRequest:Connect(function()
+  if getgenv().InfJump and LocalPlayer.Character then
+    LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
   end
-})
+end)
+showVersion(MovementTab)
 
-VisualsTab:CreateToggle({
-  Name = "FPS Booster (Main Game)",
-  CurrentValue = false,
-  Callback = function(v)
-    for _, obj in pairs(workspace:GetDescendants()) do
-      if obj:IsA("Part") then
-        obj.Material = v and Enum.Material.SmoothPlastic or Enum.Material.Plastic
-      end
-    end
-  end
-})
-
-VisualsTab:CreateToggle({
-  Name = "FPS Booster (Boss)",
-  CurrentValue = false,
-  Callback = function(v)
-    for _, obj in pairs(workspace:GetDescendants()) do
-      if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
-        obj.Enabled = not v
-      end
-    end
-  end
-})
-
--- Misc
+-- MISC TAB
+local MiscTab = Window:CreateTab("Misc", 4483362458)
 MiscTab:CreateButton({
   Name = "Anti-AFK",
   Callback = function()
-    local VirtualUser = game:service("VirtualUser")
-    LocalPlayer.Idled:connect(function()
-      VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-      wait(1)
-      VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-    end)
+    for _, v in pairs(getconnections(LocalPlayer.Idled)) do
+      v:Disable()
+    end
+    Rayfield:Notify({ Title = "Anti-AFK Enabled", Content = "You will no longer get kicked for being idle." })
   end
 })
+showVersion(MiscTab)
