@@ -1,5 +1,5 @@
 -- Stands Awakening Hub – by skulldagrait
--- Version v1.2
+-- Version v1.3
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
@@ -36,7 +36,7 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 local function showVersion(tab)
-  tab:CreateParagraph({ Title = "Version", Content = "v1.2" })
+  tab:CreateParagraph({ Title = "Version", Content = "v1.3" })
 end
 
 -- Teleport Tab
@@ -103,7 +103,6 @@ ItemsTab:CreateToggle({
     end)
   end
 })
-
 ItemsTab:CreateToggle({
   Name = "Auto Collect Banknote",
   CurrentValue = true,
@@ -112,25 +111,20 @@ ItemsTab:CreateToggle({
     task.spawn(function()
       while getgenv().AutoBanknote do
         task.wait(1)
-        local function tryUseBanknote(container)
-          if container then
-            for _, tool in ipairs(container:GetChildren()) do
-              if tool.Name == "Banknote" and tool:IsA("Tool") then
-                LocalPlayer.Character.Humanoid:EquipTool(tool)
-                wait(0.3)
-                pcall(function() tool:Activate() end)
-              end
-            end
+        for _,v in ipairs(LocalPlayer.Backpack:GetChildren()) do
+          if v:IsA("Tool") and v.Name == "Banknote" then
+            LocalPlayer.Character.Humanoid:EquipTool(v)
+            task.wait(0.25)
+            pcall(function() v:Activate() end)
           end
         end
-        tryUseBanknote(LocalPlayer:FindFirstChild("Backpack"))
-        tryUseBanknote(LocalPlayer.Character)
+        local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Banknote")
+        if tool then pcall(function() tool:Activate() end) end
       end
     end)
   end
 })
-
--- Notify on rare tool
+-- Rare Item Notification
 task.spawn(function()
   while true do
     task.wait(5)
@@ -177,20 +171,24 @@ showVersion(VisualTab)
 
 -- Movement Tab
 local MoveTab = Window:CreateTab("Movement", 4483362458)
-MoveTab:CreateSlider({
-  Name = "WalkSpeed",
-  Min = 16, Max = 500, CurrentValue = 16,
+MoveTab:CreateToggle({
+  Name = "Speed Boost",
+  CurrentValue = false,
   Callback = function(v)
     updateHumanoid()
-    if Humanoid then Humanoid.WalkSpeed = v end
+    if Humanoid then
+      Humanoid.WalkSpeed = v and 100 or 16
+    end
   end
 })
-MoveTab:CreateSlider({
-  Name = "JumpPower",
-  Min = 50, Max = 500, CurrentValue = 50,
+MoveTab:CreateToggle({
+  Name = "Jump Boost",
+  CurrentValue = false,
   Callback = function(v)
     updateHumanoid()
-    if Humanoid then Humanoid.JumpPower = v end
+    if Humanoid then
+      Humanoid.JumpPower = v and 150 or 50
+    end
   end
 })
 getgenv().InfJump = false
@@ -204,39 +202,33 @@ UserInputService.JumpRequest:Connect(function()
     Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
   end
 end)
-getgenv().Noclip = false
-MoveTab:CreateToggle({
-  Name = "Noclip",
-  CurrentValue = false,
-  Callback = function(v) getgenv().Noclip = v end
-})
-RunService.Stepped:Connect(function()
-  if getgenv().Noclip and LocalPlayer.Character then
-    for _,part in ipairs(LocalPlayer.Character:GetDescendants()) do
-      if part:IsA("BasePart") then part.CanCollide = false end
-    end
-  end
-end)
 MoveTab:CreateButton({
   Name = "Toggle Fly (Press E)",
   Callback = function()
+    local UIS = UserInputService
+    local runService = RunService
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
     local flying = false
     local bv, bg
-    UserInputService.InputBegan:Connect(function(input)
+
+    UIS.InputBegan:Connect(function(input)
       if input.KeyCode == Enum.KeyCode.E then
         flying = not flying
-        local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if flying and hrp then
+        if flying then
           bv = Instance.new("BodyVelocity", hrp)
           bg = Instance.new("BodyGyro", hrp)
-          bv.MaxForce = Vector3.new(1e5,1e5,1e5)
-          bg.MaxTorque = Vector3.new(1e5,1e5,1e5)
-        elseif bv and bg then
-          bv:Destroy() bg:Destroy()
+          bv.Velocity = Vector3.zero
+          bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+          bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+        else
+          if bv then bv:Destroy() end
+          if bg then bg:Destroy() end
         end
       end
     end)
-    RunService.RenderStepped:Connect(function()
+
+    runService.RenderStepped:Connect(function()
       if flying and bv and bg then
         bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * 50
         bg.CFrame = workspace.CurrentCamera.CFrame
@@ -251,17 +243,17 @@ local MiscTab = Window:CreateTab("Misc", 4483362458)
 MiscTab:CreateButton({
   Name = "Anti-AFK",
   Callback = function()
-    local vu = game:GetService("VirtualUser")
-    Players.LocalPlayer.Idled:Connect(function()
-      vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-      wait(1)
-      vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    local VirtualUser = game:service('VirtualUser')
+    Players.LocalPlayer.Idled:connect(function()
+      VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+      task.wait(1)
+      VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
     end)
   end
 })
 showVersion(MiscTab)
 
--- Credits Tab
+-- Credits
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
 CreditsTab:CreateParagraph({
   Title = "By skulldagrait",
