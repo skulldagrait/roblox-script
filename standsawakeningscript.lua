@@ -1,4 +1,5 @@
--- Stands Awakening Hub – by skulldagrait (Codex + Android Friendly)
+-- Version: v1.0
+local VERSION = "v1.0"
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
@@ -13,10 +14,16 @@ local Window = Rayfield:CreateWindow({
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
 local Humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+
+local function createVersionLabel(tab)
+  tab:CreateParagraph({ Title = "", Content = "Version: " .. VERSION })
+end
 
 -- Teleport Tab
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+createVersionLabel(TeleportTab)
 local teleports = {
   {"Timmy NPC", Vector3.new(1394,584,-219)},
   {"Tim NPC",   Vector3.new(1399,584,-216)},
@@ -39,28 +46,34 @@ for _,tp in ipairs(teleports) do
   end })
 end
 
--- Items Tab
-local ItemsTab = Window:CreateTab("Items", 4483362458)
-getgenv().AutoFarmItems = false
-getgenv().AutoCollectBanknote = false
-local rareItems = {"DIO's Diary", "Requiem Arrow", "Camera", "Bone", "Stone Mask"}
+-- AutoFarm + Item Handling
+local OP = Window:CreateTab("Items", 4483362458)
+createVersionLabel(OP)
 
-ItemsTab:CreateToggle({
-  Name = "AutoFarm All Items (Full Map)",
+local STANDFARM_POS = Vector3.new(-225, 461, -1396)
+local RARE_ITEMS = {"Camera", "Pot", "DIO's Skull", "Uncanny Key"}
+local VERY_RARE_ITEMS = {"Canny Key"}
+
+getgenv().AutoFarm = false
+OP:CreateToggle({
+  Name = "AutoFarm All Items",
   CurrentValue = false,
   Callback = function(v)
-    getgenv().AutoFarmItems = v
-    while getgenv().AutoFarmItems do
+    getgenv().AutoFarm = v
+    while getgenv().AutoFarm do
       task.wait(0.5)
-      for _,item in pairs(workspace:GetDescendants()) do
-        if item:IsA("Tool") and item:FindFirstChild("Handle") and not item.Parent:FindFirstChildOfClass("Humanoid") then
-          LocalPlayer.Character.HumanoidRootPart.CFrame = item.Handle.CFrame + Vector3.new(0,2,0)
-          if table.find(rareItems, item.Name) then
-            Rayfield:Notify({
-              Title = "High-Value Item Collected",
-              Content = "You picked up: " .. item.Name .. "\nConsider storing it in your bank.",
-              Duration = 6
-            })
+      for _,item in pairs(workspace:GetChildren()) do
+        if item:IsA("Tool") and item:FindFirstChild("Handle") and not item.Parent:IsA("Model") then
+          local pos = item.Handle.Position
+          if (pos - STANDFARM_POS).Magnitude > 50 then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = item.Handle.CFrame
+
+            local itemName = item.Name
+            if table.find(RARE_ITEMS, itemName) then
+              Rayfield:Notify({ Title = "Rare Item Acquired", Content = itemName .. " picked up! Store it in your bank!" })
+            elseif table.find(VERY_RARE_ITEMS, itemName) then
+              Rayfield:Notify({ Title = "VERY RARE ITEM!", Content = itemName .. " picked up! STORE THIS IN BANK ASAP!" })
+            end
           end
         end
       end
@@ -68,30 +81,30 @@ ItemsTab:CreateToggle({
   end,
 })
 
-ItemsTab:CreateToggle({
+OP:CreateToggle({
   Name = "Auto Collect Banknote",
   CurrentValue = false,
-  Callback = function(v)
-    getgenv().AutoCollectBanknote = v
-    while getgenv().AutoCollectBanknote do
-      task.wait(1)
+  Callback = function(state)
+    getgenv().AutoBanknote = state
+    while getgenv().AutoBanknote do
+      task.wait(0.25)
       local backpack = LocalPlayer:FindFirstChild("Backpack")
       if backpack then
         local banknote = backpack:FindFirstChild("Banknote")
         if banknote then
           LocalPlayer.Character.Humanoid:EquipTool(banknote)
-          task.wait(0.5)
-          fireclickdetector(banknote:FindFirstChildOfClass("ClickDetector"))
+          banknote:Activate()
         end
       end
     end
-  end,
+  end
 })
 
 -- Boss Tab
 local BossTab = Window:CreateTab("Boss", 4483362458)
+createVersionLabel(BossTab)
 BossTab:CreateButton({
-  Name = "AutoBoss (Kill all bosses)",
+  Name = "AutoBoss (Kill nearest boss)",
   Callback = function()
     for _,mob in pairs(workspace:GetChildren()) do
       if mob:FindFirstChildOfClass("Humanoid") and mob.Name:match("Boss") then
@@ -101,64 +114,42 @@ BossTab:CreateButton({
   end,
 })
 
--- Visual Tab
-local VisualTab = Window:CreateTab("Visual", 4483362458)
-VisualTab:CreateButton({
-  Name = "Enable Fullbright",
-  Callback = function()
-    local light = game:GetService("Lighting")
-    light.Ambient = Color3.new(0.6,0.6,0.6)
-    light.Brightness = 3
-    light.ClockTime = 12
-    light.FogEnd = 10000
-    light.GlobalShadows = false
-  end,
-})
-VisualTab:CreateButton({
-  Name = "FPS Booster",
-  Callback = function()
-    for _,v in pairs(workspace:GetDescendants()) do
-      if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
-        v.Enabled = false
-      elseif v:IsA("Decal") or v:IsA("Texture") then
-        v.Transparency = 1
-      elseif v:IsA("MeshPart") or v:IsA("Part") or v:IsA("UnionOperation") then
-        v.Material = Enum.Material.SmoothPlastic
-        v.Reflectance = 0
-      end
+-- Movement Tab
+local MoveTab = Window:CreateTab("Movement", 4483362458)
+createVersionLabel(MoveTab)
+
+MoveTab:CreateSlider({
+  Name = "WalkSpeed",
+  Min = 16, Max = 750, CurrentValue = 16,
+  Callback = function(v)
+    if LocalPlayer.Character then
+      local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+      if hum then hum.WalkSpeed = v end
     end
   end,
 })
 
--- Movement Tab
-local MoveTab = Window:CreateTab("Movement", 4483362458)
-MoveTab:CreateSlider({
-  Name = "WalkSpeed",
-  Min = 16, Max = 750, CurrentValue = 16,
-  Callback = function(v) if Humanoid then Humanoid.WalkSpeed = v end end,
-})
 MoveTab:CreateSlider({
   Name = "JumpPower",
   Min = 50, Max = 750, CurrentValue = 50,
-  Callback = function(v) if Humanoid then Humanoid.JumpPower = v end end,
+  Callback = function(v)
+    if LocalPlayer.Character then
+      local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+      if hum then hum.JumpPower = v end
+    end
+  end,
 })
+
 getgenv().InfJump = false
-MoveTab:CreateToggle({
-  Name = "Infinite Jump",
-  CurrentValue = false,
-  Callback = function(v) getgenv().InfJump = v end,
-})
-game:GetService("UserInputService").JumpRequest:Connect(function()
+MoveTab:CreateToggle({ Name = "Infinite Jump", CurrentValue = false, Callback = function(v) getgenv().InfJump = v end })
+UIS.JumpRequest:Connect(function()
   if getgenv().InfJump and Humanoid then
     Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
   end
 end)
+
 getgenv().Noclip = false
-MoveTab:CreateToggle({
-  Name = "Noclip",
-  CurrentValue = false,
-  Callback = function(v) getgenv().Noclip = v end,
-})
+MoveTab:CreateToggle({ Name = "Noclip", CurrentValue = false, Callback = function(v) getgenv().Noclip = v end })
 RunService.Stepped:Connect(function()
   if getgenv().Noclip and LocalPlayer.Character then
     for _,part in ipairs(LocalPlayer.Character:GetDescendants()) do
@@ -166,79 +157,67 @@ RunService.Stepped:Connect(function()
     end
   end
 end)
+
 MoveTab:CreateButton({
   Name = "Toggle Fly (Press E)",
   Callback = function()
-    local flyScript = [[
-      local plr = game.Players.LocalPlayer
-      local hum = plr.Character:FindFirstChildOfClass("Humanoid")
-      if not hum then return end
-      local flying = true
-      hum.PlatformStand = true
-      local bg = Instance.new("BodyGyro", hum.RootPart)
-      local bv = Instance.new("BodyVelocity", hum.RootPart)
-      bg.P = 9e4; bg.MaxTorque = Vector3.new(9e9,9e9,9e9)
-      bv.MaxForce = Vector3.new(9e9,9e9,9e9)
-      bv.Velocity = Vector3.new(0,0,0)
-      game:GetService("UserInputService").InputBegan:Connect(function(i)
-        if i.KeyCode == Enum.KeyCode.E then
-          flying = not flying
-          hum.PlatformStand = flying
-          if not flying then bg:Destroy(); bv:Destroy() end
+    local Fly = false
+    local bv, bg
+    UIS.InputBegan:Connect(function(i)
+      if i.KeyCode == Enum.KeyCode.E then
+        Fly = not Fly
+        local char = LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if Fly and hrp then
+          bg = Instance.new("BodyGyro", hrp)
+          bv = Instance.new("BodyVelocity", hrp)
+          bg.MaxTorque = Vector3.new(1e9,1e9,1e9)
+          bv.MaxForce = Vector3.new(1e9,1e9,1e9)
+          RunService.RenderStepped:Connect(function()
+            if Fly then
+              bg.CFrame = workspace.CurrentCamera.CFrame
+              bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * 100
+            end
+          end)
+        elseif not Fly then
+          if bg then bg:Destroy() end
+          if bv then bv:Destroy() end
         end
-      end)
-      game:GetService("RunService").RenderStepped:Connect(function()
-        if flying then
-          bv.Velocity = workspace.CurrentCamera.CFrame.LookVector * 50
-          bg.CFrame = workspace.CurrentCamera.CFrame
-        end
-      end)
-    ]]
-    loadstring(flyScript)()
+      end
+    end)
   end,
 })
 
 -- Misc Tab
 local MiscTab = Window:CreateTab("Misc", 4483362458)
-getgenv().AntiAFK = false
+createVersionLabel(MiscTab)
 MiscTab:CreateToggle({
-  Name = "Anti-AFK (Every 5 min action)",
+  Name = "Anti-AFK (Auto jump/move every 5 min)",
   CurrentValue = false,
-  Callback = function(v)
-    getgenv().AntiAFK = v
+  Callback = function(enabled)
+    getgenv().AntiAFK = enabled
     while getgenv().AntiAFK do
       task.wait(300)
-      local char = LocalPlayer.Character
-      if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame + Vector3.new(0,5,0)
-        task.wait(0.5)
-        char.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame - Vector3.new(0,5,0)
-      end
+      if Humanoid then Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
-  end,
+  end
 })
 
--- Settings Tab
+-- Settings (Themes)
 local SettingsTab = Window:CreateTab("Settings", 4483362458)
+createVersionLabel(SettingsTab)
 SettingsTab:CreateDropdown({
   Name = "Theme",
-  Options = {"Default", "Dark", "Light", "Vibrant", "Ocean"},
+  Options = {"Default", "Dark", "Blood Red", "Ocean Blue"},
   CurrentOption = "Default",
-  Callback = function(option)
-    Rayfield:SetTheme(option)
+  Callback = function(selected)
+    Rayfield:SetTheme(selected)
   end
 })
-
--- Hide UI with RShift
-local UIS = game:GetService("UserInputService")
-UIS.InputBegan:Connect(function(input, gpe)
-  if not gpe and input.KeyCode == Enum.KeyCode.RightShift then
-    Rayfield:Toggle()
-  end
-end)
 
 -- Credits Tab
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
+createVersionLabel(CreditsTab)
 CreditsTab:CreateParagraph({
   Title = "By skulldagrait",
   Content = "YouTube: youtube.com/@skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: discord.gg/wUtef63fms"
