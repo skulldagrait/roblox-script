@@ -17,31 +17,34 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local HumanoidRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 
--- Items Tab
-local ItemsTab = Window:CreateTab("Items", 4483362458)
-
-ItemsTab:CreateButton({
-    Name = "Auto Pickup Uncanney Key + Teleport (Once)",
-    Callback = function()
-        local teleported = false
-        task.spawn(function()
-            while true do
-                task.wait(1)
-                for i,v in pairs(Workspace:GetDescendants()) do
-                    if v:IsA("Tool") and v.Name == "Uncanney Key" then
-                        firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Handle, 0)
-                        firetouchinterest(LocalPlayer.Character.HumanoidRootPart, v.Handle, 1)
-                        if not teleported then
-                            teleported = true
-                            HumanoidRootPart.CFrame = CFrame.new(-80.54, 3.66, 245.48)
-                        end
-                    end
-                end
+-- Teleport Tab
+local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+local teleports = {
+    {"Timmy NPC", Vector3.new(1394, 584, -219)},
+    {"Tim NPC", Vector3.new(1399, 584, -216)},
+    {"Tom NPC", Vector3.new(1343, 587, -554)},
+    {"Sans NPC", Vector3.new(1045, 583, -442)},
+    {"Donation Leaderboard", Vector3.new(1670, 583, -506)},
+    {"Waterfall (Uncanney Key spawn)", Vector3.new(1625, 578, -747)},
+    {"Doghouse (Uncanney Key spawn)", Vector3.new(1033, 583, -178)},
+    {"Arena", Vector3.new(1248, 583, -280)},
+    {"Key Portal", Vector3.new(1093, 583, -699)},
+    {"Stand/Rokaka/Arrow Farm", Vector3.new(-339, 461, -1514)},
+    {"Main Area (Middle of map)", Vector3.new(1341, 583, -482)},
+    {"D4C Location", Vector3.new(-3070, 464, -421)},
+}
+for _,tp in pairs(teleports) do
+    TeleportTab:CreateButton({
+        Name = tp[1],
+        Callback = function()
+            if HumanoidRootPart then
+                HumanoidRootPart.CFrame = CFrame.new(tp[2])
             end
-        end)
-    end,
-})
+        end,
+    })
+end
 
 -- Visual Tab
 local VisualTab = Window:CreateTab("Visual", 4483362458)
@@ -76,131 +79,83 @@ VisualTab:CreateButton({
     end,
 })
 
-VisualTab:CreateButton({
-    Name = "FPS Booster (Boss)",
-    Callback = function()
-        for _,v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("BasePart") or v:IsA("MeshPart") or v:IsA("Part") then
-                if v.Name:lower():find("bomb") or v.Name:lower():find("effect") or v.Name:lower():find("blue") then
-                    v.Transparency = 1
-                    if v:FindFirstChild("Decal") then
-                        v.Decal.Transparency = 1
-                    end
-                end
-            end
-        end
-    end,
-})
-
 -- Boss Tab
 local BossTab = Window:CreateTab("Boss", 4483362458)
 
 BossTab:CreateButton({
-    Name = "Start AutoBoss (Huge Hitbox + Dodge + Fast Swing)",
+    Name = "Start AutoBoss (Stealth Optimized)",
     Callback = function()
-        local Attacking = Workspace.Dead
-        local Obby = Workspace.ObbyW
-        local Phase = Workspace.BossPhase
+        local Attacking = Workspace:FindFirstChild("Dead")
+        local Obby = Workspace:FindFirstChild("ObbyW")
+        local Phase = Workspace:FindFirstChild("BossPhase")
 
         if LocalPlayer.Backpack:FindFirstChild("KnightsSword") then
             LocalPlayer.Backpack["KnightsSword"].Parent = LocalPlayer.Character
         end
 
-        if LocalPlayer.Character:FindFirstChild("KnightsSword") then
-            local Sword = LocalPlayer.Character:FindFirstChild("KnightsSword")
-            local Box = Instance.new("SelectionBox")
-            Box.Name = "SelectionBoxCreated"
-            Box.Parent = Sword.Handle
-            Box.Adornee = Sword.Handle
-            Sword.Handle.Massless = true
-            Sword.GripPos = Vector3.new(0,0,0)
-            LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):UnequipTools()
-            LocalPlayer.Backpack["KnightsSword"].Parent = LocalPlayer.Character
-            Sword.Handle.Size = Vector3.new(1000, 1000, 1000)
+        local Sword = LocalPlayer.Character:FindFirstChild("KnightsSword")
+        if Sword then
+            local handle = Sword:FindFirstChild("Handle")
+            handle.Massless = true
+            handle.Size = Vector3.new(20, 20, 20) -- moderate stealth hitbox
         end
 
-        -- Dodge System
+        -- Smooth Dodge System
         task.spawn(function()
-            local safeOffset = Vector3.new(0, 50, 0)
-            game:GetService("RunService").Heartbeat:Connect(function()
+            while task.wait(0.1) do
                 for _,v in pairs(Workspace:GetDescendants()) do
-                    if v:IsA("BasePart") or v:IsA("MeshPart") or v:IsA("Part") then
+                    if v:IsA("BasePart") or v:IsA("MeshPart") then
                         local name = v.Name:lower()
                         local size = v.Size
                         if (name:find("bomb") or name:find("laser") or name:find("attack") or name:find("effect") or name:find("hitbox") or size.X > 20 or size.Z > 20) then
-                            if (v.Position - HumanoidRootPart.Position).Magnitude < 20 then
-                                HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + safeOffset
+                            if (v.Position - HumanoidRootPart.Position).Magnitude < 15 then
+                                local bv = Instance.new("BodyVelocity")
+                                bv.Velocity = Vector3.new(0,50,0)
+                                bv.MaxForce = Vector3.new(0, math.huge, 0)
+                                bv.Parent = HumanoidRootPart
+                                game.Debris:AddItem(bv, 0.2)
                             end
-                        end
-                    end
-                end
-            end)
-        end)
-
-        -- Auto Movement
-        task.spawn(function()
-            while Attacking.Value == false do
-                task.wait(0.1)
-                if Obby.Value == true then
-                    HumanoidRootPart.CFrame = CFrame.new(20.4561386, 113.245972, 196.61351)
-                else
-                    if Phase.Value == "None" then
-                        HumanoidRootPart.CFrame = CFrame.new(-5.46999931, -4.45343876, 248.209991)
-                    else
-                        local boss = Workspace:FindFirstChild("Boss") or Workspace:FindFirstChild("UncannyBoss")
-                        if boss and boss:FindFirstChild("HumanoidRootPart") then
-                            HumanoidRootPart.CFrame = boss.HumanoidRootPart.CFrame * CFrame.new(0, 50, -50)
                         end
                     end
                 end
             end
         end)
 
-        -- Auto Attack
+        -- Auto Movement
         task.spawn(function()
-            while Attacking.Value == false do
+            while Attacking and Attacking.Value == false do
                 task.wait(0.1)
-                if Obby.Value == false then
-                    if LocalPlayer.Character:FindFirstChild("KnightsSword") then
-                        LocalPlayer.Character.KnightsSword:Activate()
+                if Obby and Obby.Value == true then
+                    HumanoidRootPart.CFrame = CFrame.new(20.4561386, 113.245972, 196.61351)
+                else
+                    if Phase and Phase.Value == "None" then
+                        HumanoidRootPart.CFrame = CFrame.new(-5.46999931, -4.45343876, 248.209991)
+                    else
+                        local boss = Workspace:FindFirstChild("Boss") or Workspace:FindFirstChild("UncannyBoss")
+                        if boss and boss:FindFirstChild("HumanoidRootPart") then
+                            HumanoidRootPart.CFrame = boss.HumanoidRootPart.CFrame * CFrame.new(0, 10, -10)
+                        end
                     end
+                end
+            end
+        end)
+
+        -- Auto Attack Fast with randomization
+        task.spawn(function()
+            while Attacking and Attacking.Value == false do
+                task.wait(math.random(8,12)/100) -- random between 0.08-0.12
+                if Sword then
+                    Sword:Activate()
                 end
             end
         end)
     end,
 })
-
--- Teleport Tab
-local TeleportTab = Window:CreateTab("Teleports", 4483362458)
-
-local function createTeleport(name, position)
-    TeleportTab:CreateButton({
-        Name = name,
-        Callback = function()
-            if HumanoidRootPart then
-                HumanoidRootPart.CFrame = CFrame.new(unpack(position))
-            end
-        end,
-    })
-end
-
-createTeleport("Timmy NPC", {1394, 584, -219})
-createTeleport("Tim NPC", {1399, 584, -216})
-createTeleport("Tom NPC", {1343, 587, -554})
-createTeleport("Sans NPC", {1045, 583, -442})
-createTeleport("Donation Leaderboard", {1670, 583, -506})
-createTeleport("Waterfall (Uncanney Key spawn)", {1625, 578, -747})
-createTeleport("Doghouse (Uncanney Key spawn)", {1033, 583, -178})
-createTeleport("Arena", {1248, 583, -280})
-createTeleport("Key Portal", {1093, 583, -699})
-createTeleport("Stand/Rokaka/Arrow Farm", {-339, 461, -1514})
-createTeleport("Main Area (Middle of map)", {1341, 583, -482})
-createTeleport("D4C Location", {-3070, 464, -421})
 
 -- Credits Tab
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
 
 CreditsTab:CreateParagraph({
     Title = "Script made by skulldagrait",
-    Content = "YouTube: youtube.com/@skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: skulldagrait\nDiscord Server: https://discord.gg/wUtef63fms"
+    Content = "YouTube: youtube.com/@skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: skulldagrait\nDiscord Server: https://discord.gg/wUtef63fms\n\nCopy manually for clickable use."
 })
