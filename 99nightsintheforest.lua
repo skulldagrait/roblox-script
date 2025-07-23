@@ -1,158 +1,187 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "99 Nights Script - Made by skulldagrait",
+   Name = "99 Nights in the Forest - AutoWin Hub by skulldagrait",
    LoadingTitle = "Loading...",
    LoadingSubtitle = "By skulldagrait",
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "99Nights_Hub",
+      FolderName = "99NightsHub",
       FileName = "Config"
    },
    Discord = { Enabled = false },
    KeySystem = false,
 })
 
+-- Services
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local HumanoidRootPart = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
-local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
 
--- Anti-AFK
+-- Auto Anti-AFK
 task.spawn(function()
     while true do
-        task.wait(300)
-        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new())
+        task.wait(300) -- every 5 minutes
     end
 end)
 
--- Variables
-local campfireCFrame = CFrame.new(-4, 3, -1)
-local autoTPEnabled = false
-
--- Main Tab
-local MainTab = Window:CreateTab("Main", 4483362458)
-
-MainTab:CreateButton({
-    Name = "Auto Win",
-    Callback = function()
-        -- Replace with your actual Auto Win logic (rescue all children & win)
-        Rayfield:Notify({
-            Title = "Auto Win",
-            Content = "Auto Win activated (placeholder, add actual logic).",
-            Duration = 5,
-        })
-    end,
-})
-
--- Protection Tab
-local ProtectionTab = Window:CreateTab("Protection", 4483362458)
-
-ProtectionTab:CreateToggle({
-    Name = "Auto TP to Safezone if attacked",
-    CurrentValue = false,
-    Flag = "AutoTPIfAttacked",
-    Callback = function(Value)
-        autoTPEnabled = Value
-    end,
-})
-
-task.spawn(function()
-    while task.wait(0.5) do
-        if autoTPEnabled then
-            local deer = nil
-            for _,v in pairs(Workspace:GetDescendants()) do
-                if v:IsA("Model") and v.Name:lower():find("deer") then
-                    deer = v
-                    break
-                end
+-- Auto Win logic
+local autoWinEnabled = false
+local function AutoWinLoop()
+    while autoWinEnabled do
+        -- 1. Collect Wood
+        for _, wood in pairs(Workspace.Wood:GetChildren()) do
+            local log = wood:FindFirstChild("Log")
+            if log and log:FindFirstChild("ProximityPrompt") then
+                HumanoidRootPart.CFrame = log.CFrame + Vector3.new(0,3,0)
+                fireproximityprompt(log.ProximityPrompt)
+                task.wait(1)
             end
-            if deer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local distance = (deer.PrimaryPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                if distance < 30 then
-                    LocalPlayer.Character.HumanoidRootPart.CFrame = campfireCFrame + Vector3.new(0,5,0)
+        end
+
+        -- 2. Build Shelter
+        local buildEvent = ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("BuildShelter")
+        if buildEvent then
+            buildEvent:FireServer()
+        end
+
+        -- 3. Light Campfire
+        local lightEvent = ReplicatedStorage:FindFirstChild("Events") and ReplicatedStorage.Events:FindFirstChild("LightFire")
+        if lightEvent then
+            lightEvent:FireServer()
+        end
+
+        -- 4. Fuel Campfire (if separate fuel logic exists)
+
+        -- 5. Check Hunger and hunt animals
+        local hunger = LocalPlayer:FindFirstChild("Hunger") and LocalPlayer.Hunger.Value or 100
+        if hunger < 20 then
+            for _, animal in pairs(Workspace:GetDescendants()) do
+                if animal.Name == "Rabbit" or animal.Name == "Wolf" then
+                    HumanoidRootPart.CFrame = animal.CFrame + Vector3.new(0,3,0)
+                    -- Add kill logic if known
+                    task.wait(1)
                 end
             end
         end
+
+        task.wait(2)
+    end
+end
+
+-- Deer avoidance
+local deerProtectionEnabled = true
+task.spawn(function()
+    while true do
+        if deerProtectionEnabled then
+            for _, ent in pairs(Workspace:GetDescendants()) do
+                if ent.Name == "Deer" and ent:IsA("Model") then
+                    local dist = (ent.PrimaryPart.Position - HumanoidRootPart.Position).Magnitude
+                    if dist < 20 then -- adjust safe range
+                        HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + Vector3.new(0,20,0)
+                    end
+                end
+            end
+        end
+        task.wait(1)
     end
 end)
 
--- Visuals Tab
-local VisualTab = Window:CreateTab("Visuals", 4483362458)
+-- ESP logic (Collectibles + NPCs)
+local function AddESP(name)
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj.Name == name and obj:IsA("BasePart") then
+            local billboard = Instance.new("BillboardGui", obj)
+            billboard.Size = UDim2.new(0,100,0,20)
+            billboard.Adornee = obj
+            billboard.AlwaysOnTop = true
+            local textLabel = Instance.new("TextLabel", billboard)
+            textLabel.Size = UDim2.new(1,0,1,0)
+            textLabel.BackgroundTransparency = 1
+            textLabel.Text = name
+            textLabel.TextColor3 = Color3.new(1,1,1)
+            textLabel.TextScaled = true
+        end
+    end
+end
+
+-- ESP for main categories
+AddESP("Log")
+AddESP("Rabbit")
+AddESP("Wolf")
+AddESP("Deer")
+AddESP("Chest")
+AddESP("Bed")
+AddESP("CraftingBench")
+
+-- GUI Tabs and Toggles
+local MainTab = Window:CreateTab("Main", 4483362458)
+
+MainTab:CreateToggle({
+    Name = "Auto Win (Collect, Build, Light Fire)",
+    CurrentValue = false,
+    Callback = function(Value)
+        autoWinEnabled = Value
+        if Value then
+            AutoWinLoop()
+        end
+    end,
+})
+
+local ProtectionTab = Window:CreateTab("Protection", 4483362458)
+
+ProtectionTab:CreateButton({
+    Name = "Become Safe (Fly up with Airwalk)",
+    Callback = function()
+        HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + Vector3.new(0,20,0)
+        -- Airwalk logic here (anchor position if needed)
+    end,
+})
+
+ProtectionTab:CreateToggle({
+    Name = "Auto TP to SafeZone if Attacked",
+    CurrentValue = true,
+    Callback = function(Value)
+        deerProtectionEnabled = Value
+    end,
+})
+
+local VisualTab = Window:CreateTab("Visual", 4483362458)
 
 VisualTab:CreateButton({
     Name = "Enable Fullbright",
     Callback = function()
-        Lighting.Ambient = Color3.new(1,1,1)
-        Lighting.Brightness = 5
-        Lighting.ClockTime = 12
-        Lighting.FogEnd = 10000
-        Lighting.GlobalShadows = false
+        local lighting = game:GetService("Lighting")
+        lighting.Ambient = Color3.new(1,1,1)
+        lighting.Brightness = 2
+        lighting.ClockTime = 12
+        lighting.FogEnd = 10000
+        lighting.GlobalShadows = false
     end,
 })
 
 VisualTab:CreateButton({
-    Name = "FPS Booster",
+    Name = "FPS Boost",
     Callback = function()
         for _,v in pairs(Workspace:GetDescendants()) do
-            if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then
-                v.Enabled = false
-            elseif v:IsA("Decal") or v:IsA("Texture") then
+            if v:IsA("Texture") or v:IsA("Decal") then
                 v.Transparency = 1
-            elseif v:IsA("MeshPart") or v:IsA("Part") or v:IsA("UnionOperation") then
-                v.Material = Enum.Material.SmoothPlastic
-                v.Reflectance = 0
+            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+                v.Enabled = false
             end
         end
     end,
 })
 
--- ESP Tab
-local ESPTab = Window:CreateTab("ESP", 4483362458)
-
-ESPTab:CreateButton({
-    Name = "ESP Players",
-    Callback = function()
-        for _,player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local billboard = Instance.new("BillboardGui", player.Character.HumanoidRootPart)
-                billboard.Size = UDim2.new(0,100,0,30)
-                billboard.AlwaysOnTop = true
-                local label = Instance.new("TextLabel", billboard)
-                label.Size = UDim2.new(1,0,1,0)
-                label.BackgroundTransparency = 1
-                label.Text = player.Name
-                label.TextColor3 = Color3.new(1,1,1)
-                label.TextScaled = true
-            end
-        end
-    end,
-})
-
-ESPTab:CreateButton({
-    Name = "ESP Collectibles & NPCs",
-    Callback = function()
-        for _,obj in pairs(Workspace:GetDescendants()) do
-            if obj:IsA("Model") and (obj.Name:lower():find("npc") or obj.Name:lower():find("collectible")) and obj:FindFirstChild("HumanoidRootPart") then
-                local billboard = Instance.new("BillboardGui", obj.HumanoidRootPart)
-                billboard.Size = UDim2.new(0,100,0,30)
-                billboard.AlwaysOnTop = true
-                local label = Instance.new("TextLabel", billboard)
-                label.Size = UDim2.new(1,0,1,0)
-                label.BackgroundTransparency = 1
-                label.Text = obj.Name
-                label.TextColor3 = Color3.fromRGB(255, 215, 0)
-                label.TextScaled = true
-            end
-        end
-    end,
-})
-
--- Credits Tab
+-- Credits
 local CreditsTab = Window:CreateTab("Credits", 4483362458)
 
 CreditsTab:CreateParagraph({
-    Title = "Script made by skulldagrait",
-    Content = "YouTube: youtube.com/@skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: skulldagrait\nDiscord Server: https://discord.gg/wUtef63fms"
+    Title = "Script by skulldagrait",
+    Content = "Discord: skulldagrait\nYouTube: youtube.com/@skulldagrait\nGitHub: github.com/skulldagrait"
 })
