@@ -1,140 +1,242 @@
--- Stands Awakening Hub – by skulldagrait
--- Version: v1.9
--- Loadstring version available at: https://github.com/skulldagrait/roblox-script
+-- Stands Awakening Hub – by skulldagrait | Version v1.9
+-- Full Script with GUI, AutoBoss, Item AutoFarm, Movement, Visuals, and More
 
---// Initialization
 repeat wait() until game:IsLoaded()
-
---// Services
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local HRP = Character:WaitForChild("HumanoidRootPart")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
+local HttpService = game:GetService("HttpService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local StarterPlayer = game:GetService("StarterPlayer")
+local Lighting = game:GetService("Lighting")
 
---// UI Setup
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+-- GUI Library
+loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+
 local Window = Rayfield:CreateWindow({
-    Name = "Stands Awakening Hub – by skulldagrait",
-    LoadingTitle = "Loading",
-    LoadingSubtitle = "by skulldagrait",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = nil,
-        FileName = "StandsAwakeningHub"
-    },
-    Discord = {
-        Enabled = true,
-        Invite = "yTfcM6VNs8",
-        RememberJoins = true
-    },
-    KeySystem = false
+   Name = "Stands Awakening Hub | v1.9",
+   LoadingTitle = "Stands Awakening Hub",
+   LoadingSubtitle = "by skulldagrait",
+   ConfigurationSaving = {
+       Enabled = true,
+       FolderName = nil,
+       FileName = "StandsAwakeningHub"
+   },
+   Discord = {
+       Enabled = true,
+       Invite = "yTfcM6VNs8",
+       RememberJoins = true
+   },
+   KeySystem = false
 })
 
---// Tab Setup
-local VisualTab = Window:CreateTab("🎨 Visual", nil)
-local ItemTab = Window:CreateTab("🗝️ Items", nil)
-local BossTab = Window:CreateTab("🗡️ Boss", nil)
-local TeleportTab = Window:CreateTab("🗺️ Teleport", nil)
-local MiscTab = Window:CreateTab("⚙️ Misc", nil)
-local MovementTab = Window:CreateTab("🏃 Movement", nil)
-local CreditsTab = Window:CreateTab("🙏 Credits", nil)
+-- Variables
+local AutofarmEnabled = false
+local AutobossEnabled = false
+local BossThread = nil
+local MovementOptions = {Speed = false, Jump = false, Fly = false, InfJump = false, Noclip = false}
 
---// Version Display
-for _, tab in ipairs({VisualTab, ItemTab, BossTab, TeleportTab, MiscTab, MovementTab, CreditsTab}) do
-    tab:CreateParagraph({Title = "Version", Content = "v1.9"})
+-- Version Label
+local function AddVersionLabel(tab)
+   tab:CreateParagraph({Title = "", Content = "Version: v1.9"})
 end
 
---// Anti-AFK
-MiscTab:CreateToggle({
-    Name = "Anti-AFK",
-    CurrentValue = true,
-    Flag = "AntiAFK",
-    Callback = function(Value)
-        if Value then
-            for i,v in pairs(getconnections(LocalPlayer.Idled)) do
-                v:Disable()
-            end
-        end
-    end
+-- AutoFarm
+local ItemsTab = Window:CreateTab("Items", 4483362458)
+AddVersionLabel(ItemsTab)
+ItemsTab:CreateToggle({
+   Name = "AutoFarm Items",
+   CurrentValue = false,
+   Callback = function(v)
+       AutofarmEnabled = v
+       task.spawn(function()
+           while AutofarmEnabled do
+               for _, item in pairs(Workspace:GetDescendants()) do
+                   if item:IsA("Tool") and item.Parent == Workspace then
+                       if item.Name ~= "Arrow" and item.Name ~= "Rokaka" then
+                           if (item.Position - LocalPlayer.Character.HumanoidRootPart.Position).magnitude > 5 and item.Position ~= Vector3.new(-225, 461, -1396) then
+                               LocalPlayer.Character.HumanoidRootPart.CFrame = item.CFrame
+                               firetouchinterest(LocalPlayer.Character.HumanoidRootPart, item.Handle, 0)
+                               firetouchinterest(LocalPlayer.Character.HumanoidRootPart, item.Handle, 1)
+                           end
+                       end
+                   end
+               end
+               wait(0.5)
+           end
+       end)
+   end
 })
 
---// AutoBoss Toggle and Logic
-local autobossRunning = false
+-- Auto Collect Banknote
+ItemsTab:CreateToggle({
+   Name = "Auto Collect Banknote",
+   CurrentValue = false,
+   Callback = function(v)
+       getgenv().AutoBanknote = v
+       task.spawn(function()
+           while getgenv().AutoBanknote do
+               local inv = LocalPlayer.Backpack:GetChildren()
+               for _, item in pairs(inv) do
+                   if item:IsA("Tool") and item.Name == "Banknote" then
+                       item.Parent = LocalPlayer.Character
+                       wait(0.1)
+                       item:Activate()
+                   end
+               end
+               wait(2)
+           end
+       end)
+   end
+})
+
+-- Movement
+local MovementTab = Window:CreateTab("Movement", 4483362458)
+AddVersionLabel(MovementTab)
+
+MovementTab:CreateToggle({
+   Name = "Speed Boost",
+   CurrentValue = false,
+   Callback = function(v)
+       MovementOptions.Speed = v
+       if v then
+           LocalPlayer.Character.Humanoid.WalkSpeed = 60
+       else
+           LocalPlayer.Character.Humanoid.WalkSpeed = 16
+       end
+   end
+})
+
+MovementTab:CreateToggle({
+   Name = "Jump Boost",
+   CurrentValue = false,
+   Callback = function(v)
+       MovementOptions.Jump = v
+       if v then
+           LocalPlayer.Character.Humanoid.JumpPower = 100
+       else
+           LocalPlayer.Character.Humanoid.JumpPower = 50
+       end
+   end
+})
+
+MovementTab:CreateToggle({
+   Name = "Infinite Jump",
+   CurrentValue = false,
+   Callback = function(v)
+       MovementOptions.InfJump = v
+   end
+})
+
+UserInputService.JumpRequest:Connect(function()
+   if MovementOptions.InfJump then
+       LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+   end
+end)
+
+MovementTab:CreateToggle({
+   Name = "Fly",
+   CurrentValue = false,
+   Callback = function(v)
+       MovementOptions.Fly = v
+       if v then
+           loadstring(game:HttpGet("https://pastebin.com/raw/jGAeABHg"))()
+       end
+   end
+})
+
+-- Visuals
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
+AddVersionLabel(VisualsTab)
+
+VisualsTab:CreateButton({
+   Name = "Enable Fullbright",
+   Callback = function()
+       Lighting.Brightness = 2
+       Lighting.GlobalShadows = false
+       Lighting.FogEnd = 100000
+   end
+})
+
+VisualsTab:CreateButton({
+   Name = "FPS Booster",
+   Callback = function()
+       for _, v in pairs(Workspace:GetDescendants()) do
+           if v:IsA("BasePart") then
+               v.Material = Enum.Material.SmoothPlastic
+               v.Reflectance = 0
+           end
+       end
+   end
+})
+
+-- Misc
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+AddVersionLabel(MiscTab)
+
+MiscTab:CreateButton({
+   Name = "Anti-AFK",
+   Callback = function()
+       for _, v in pairs(getconnections(LocalPlayer.Idled)) do
+           v:Disable()
+       end
+   end
+})
+
+-- AutoBoss
+local BossTab = Window:CreateTab("Boss", 4483362458)
+AddVersionLabel(BossTab)
+
 BossTab:CreateToggle({
-    Name = "Start AutoBoss",
-    CurrentValue = false,
-    Flag = "AutoBoss",
-    Callback = function(Value)
-        autobossRunning = Value
-        if not autobossRunning then return end
+   Name = "Start AutoBoss",
+   CurrentValue = false,
+   Callback = function(v)
+       AutobossEnabled = v
+       if not v and BossThread then
+           BossThread:Disconnect()
+       elseif v then
+           BossThread = RunService.RenderStepped:Connect(function()
+               local Char = LocalPlayer.Character
+               local HRP = Char and Char:FindFirstChild("HumanoidRootPart")
+               local Sword = Char and Char:FindFirstChild("KnightsSword")
+               local Boss = Workspace:FindFirstChild("Troll")
+               local Health = Workspace:FindFirstChild("TrollHealth")
+               if Sword then
+                   Sword.Handle.Size = Vector3.new(20, 20, 500)
+                   Sword:Activate()
+               end
+               if HRP and Boss then
+                   HRP.CFrame = Boss.CFrame * CFrame.new(0, 0, -15)
+               end
+               if Health and Health.Value <= 0 then
+                   AutobossEnabled = false
+                   BossThread:Disconnect()
+               end
+           end)
+       end
+   end
+})
 
-        task.spawn(function()
-            repeat wait() until game:IsLoaded() and Players
+-- Teleports
+local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+AddVersionLabel(TeleportTab)
+TeleportTab:CreateButton({Name = "Arena", Callback = function()
+   LocalPlayer.Character:PivotTo(CFrame.new(158.4, 390.2, -165.9))
+end})
+TeleportTab:CreateButton({Name = "Main Area", Callback = function()
+   LocalPlayer.Character:PivotTo(CFrame.new(47, 391, -185))
+end})
+TeleportTab:CreateButton({Name = "Stand Farm", Callback = function()
+   LocalPlayer.Character:PivotTo(CFrame.new(-225, 461, -1396))
+end})
 
-            local Attacking = Workspace:WaitForChild("Dead")
-            local Obby = Workspace:WaitForChild("ObbyW")
-            local Phase = Workspace:WaitForChild("BossPhase")
-            local Health = Workspace:WaitForChild("TrollHealth")
-
-            -- Sword Setup
-            local function setupSword()
-                local tool = LocalPlayer.Backpack:FindFirstChild("KnightsSword") or Character:FindFirstChild("KnightsSword")
-                if tool then
-                    tool.Parent = Character
-                    local handle = tool:FindFirstChild("Handle")
-                    if handle then
-                        handle.Size = Vector3.new(20, 20, 500)
-                        handle.Massless = true
-                        local Box = Instance.new("SelectionBox")
-                        Box.Name = "SelectionBoxCreated"
-                        Box.Adornee = handle
-                        Box.Parent = handle
-                    end
-                end
-            end
-
-            setupSword()
-
-            -- Teleport Logic
-            task.spawn(function()
-                while autobossRunning and not Attacking.Value do task.wait()
-                    if Obby.Value then
-                        HRP.CFrame = CFrame.new(20.456, 113.246, 196.614)
-                    elseif Phase.Value == "None" then
-                        HRP.CFrame = CFrame.new(-5.47, -4.45, 248.21)
-                    else
-                        HRP.CFrame = CFrame.new(-19.896, -4.773, 142.499)
-                    end
-                end
-            end)
-
-            -- Attack Loop
-            task.spawn(function()
-                while autobossRunning and not Attacking.Value do task.wait()
-                    if Character:FindFirstChild("KnightsSword") then
-                        Character.KnightsSword:Activate()
-                    end
-                end
-            end)
-
-            -- Health % Monitor
-            local function Percent(a, b)
-                return (a / b)
-            end
-
-            Health:GetPropertyChangedSignal("Value"):Connect(function()
-                if Percent(Health.Value, Health.MaxHealth.Value) <= 0.003 and Percent(Health.Value, Health.MaxHealth.Value) >= 0 then
-                    Character:FindFirstChildOfClass("Humanoid"):UnequipTools()
-                    wait(1)
-                    if LocalPlayer.Backpack:FindFirstChild("KnightsSword") then
-                        LocalPlayer.Backpack["KnightsSword"].Parent = Character
-                    end
-                end
-            end)
-
-        end)
-    end
+-- Credits
+local CreditsTab = Window:CreateTab("Credits", 4483362458)
+CreditsTab:CreateParagraph({
+   Title = "Made by skulldagrait",
+   Content = "GitHub: github.com/skulldagrait\nDiscord: skulldagrait\nServer: discord.gg/yTfcM6VNs8"
 })
