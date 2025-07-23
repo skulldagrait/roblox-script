@@ -1,12 +1,16 @@
 -- Stands Awakening Hub – by skulldagrait
--- Version v1.6
+-- Version v1.7
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Window = Rayfield:CreateWindow({
   Name = "Stands Awakening Hub – by skulldagrait",
   LoadingTitle = "Loading...",
   LoadingSubtitle = "By skulldagrait",
-  ConfigurationSaving = { Enabled = true, FolderName = "SA_Hub", FileName = "Config" },
+  ConfigurationSaving = {
+    Enabled = true,
+    FolderName = "SA_Hub",
+    FileName = "Config"
+  },
   Discord = { Enabled = false },
   KeySystem = false,
 })
@@ -15,70 +19,144 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
 
-local Humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-
--- Rare item lists
-local rareItems = {["Camera"]=true,["Pot"]=true,["Dio's Skull"]=true,["Uncanny Key"]=true,["Samurai Diary"]=true}
-local veryRareItems = {["Canny Key"]=true}
-
--- Utility function
+local Humanoid
 local function updateHumanoid()
   if LocalPlayer.Character then
     Humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
   end
 end
-LocalPlayer.CharacterAdded:Connect(function() wait(1); updateHumanoid() end)
+updateHumanoid()
+LocalPlayer.CharacterAdded:Connect(function()
+  wait(1)
+  updateHumanoid()
+end)
 
--- Show version
-local function showVersion(tab)
-  tab:CreateParagraph({ Title = "Version", Content = "v1.6" })
+local rareItems = {
+  ["Camera"] = true, ["Pot"] = true, ["Dio's Skull"] = true,
+  ["Uncanny Key"] = true, ["Samurai Diary"] = true
+}
+local veryRareItems = { ["Canny Key"] = true }
+
+local ignoredPos = Vector3.new(-225, 461, -1396)
+
+-- Tabs
+local TeleportTab = Window:CreateTab("Teleport", 4483362458)
+local ItemsTab = Window:CreateTab("Items", 4483362458)
+local BossTab = Window:CreateTab("Boss", 4483362458)
+local MovementTab = Window:CreateTab("Movement", 4483362458)
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
+local MiscTab = Window:CreateTab("Misc", 4483362458)
+
+-- Version Display
+for _,tab in pairs({TeleportTab, ItemsTab, BossTab, MovementTab, VisualsTab, MiscTab}) do
+  tab:CreateParagraph({ Title = "Version", Content = "v1.7" })
 end
 
--- Teleport tab
-local TeleportTab = Window:CreateTab("Teleport",4483362458)
+-- Teleports
 local teleports = {
   {"Timmy NPC", Vector3.new(1394,584,-219)},
   {"Tim NPC",   Vector3.new(1399,584,-216)},
   {"Tom NPC",   Vector3.new(1343,587,-554)},
   {"Sans NPC",  Vector3.new(1045,583,-442)},
-  {"Donation Leaderboard",Vector3.new(1670,583,-506)},
-  {"Waterfall (Key spawn)",Vector3.new(1625,578,-747)},
-  {"Doghouse (Key spawn)",Vector3.new(1033,583,-178)},
-  {"Arena",Vector3.new(1248,583,-280)},
-  {"Key Portal",Vector3.new(1093,583,-699)},
-  {"Stand/Arrow Farm",Vector3.new(-339,461,-1514)},
-  {"Main Area",Vector3.new(1341,583,-482)},
-  {"D4C Location",Vector3.new(-3070,464,-421)}
+  {"Donation Leaderboard", Vector3.new(1670,583,-506)},
+  {"Waterfall (Key spawn)", Vector3.new(1625,578,-747)},
+  {"Doghouse (Key spawn)",  Vector3.new(1033,583,-178)},
+  {"Arena", Vector3.new(1248,583,-280)},
+  {"Key Portal", Vector3.new(1093,583,-699)},
+  {"Stand/Arrow Farm", Vector3.new(-339,461,-1514)},
+  {"Main Area", Vector3.new(1341,583,-482)},
+  {"D4C Location", Vector3.new(-3070,464,-421)}
 }
 for _,tp in ipairs(teleports) do
   TeleportTab:CreateButton({
-    Name=tp[1], Callback=function()
+    Name = tp[1],
+    Callback = function()
       if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
         LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(tp[2])
       end
     end
   })
 end
-showVersion(TeleportTab)
 
--- Boss tab
-local BossTab = Window:CreateTab("Boss",4483362458)
-getgenv().AutoBoss = false
+-- Item AutoFarm
+ItemsTab:CreateToggle({
+  Name = "AutoFarm All Items",
+  CurrentValue = true,
+  Callback = function(v)
+    getgenv().AutoFarmItems = v
+    task.spawn(function()
+      while getgenv().AutoFarmItems do
+        task.wait(0.5)
+        for _,item in pairs(workspace:GetChildren()) do
+          if item:IsA("Tool") and item:FindFirstChild("Handle") and not item:FindFirstAncestorOfClass("Model") then
+            if (item.Handle.Position - ignoredPos).Magnitude > 15 then
+              LocalPlayer.Character.HumanoidRootPart.CFrame = item.Handle.CFrame
+            end
+          end
+        end
+      end
+    end)
+  end
+})
 
+ItemsTab:CreateToggle({
+  Name = "Auto Collect Banknote (anywhere)",
+  CurrentValue = true,
+  Callback = function(v)
+    getgenv().AutoBanknote = v
+    task.spawn(function()
+      while getgenv().AutoBanknote do
+        task.wait(1)
+        for _,inv in pairs({LocalPlayer.Backpack, LocalPlayer.Character}) do
+          if inv then
+            local note = inv:FindFirstChild("Banknote")
+            if note then
+              LocalPlayer.Character.Humanoid:EquipTool(note)
+              wait(0.2)
+              pcall(function() note:Activate() end)
+            end
+          end
+        end
+      end
+    end)
+  end
+})
+
+-- Rare item notify
+task.spawn(function()
+  while true do
+    task.wait(5)
+    local tool = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+    if tool then
+      if rareItems[tool.Name] then
+        Rayfield:Notify({ Title = "Rare Item!", Content = tool.Name .. " is rare. Store it in the bank!" })
+      elseif veryRareItems[tool.Name] then
+        Rayfield:Notify({ Title = "VERY RARE!", Content = tool.Name .. " is VERY RARE. Store it ASAP!" })
+      end
+    end
+  end
+end)
+
+-- AutoBoss
 BossTab:CreateToggle({
-  Name = "AutoBoss (loop)",
+  Name = "Start AutoBoss",
   CurrentValue = false,
   Callback = function(v)
     getgenv().AutoBoss = v
     task.spawn(function()
       while getgenv().AutoBoss do
-        task.wait(0.5)
-        for _,mob in ipairs(workspace:GetChildren()) do
-          local h = mob:FindFirstChildOfClass("Humanoid")
-          if h and mob.Name:match("Boss") then
-            h.Health = 0
+        task.wait(2)
+        -- Trigger boss event by touching the key portal if it exists
+        local portal = workspace:FindFirstChild("KeyPortal")
+        if portal and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+          LocalPlayer.Character.HumanoidRootPart.CFrame = portal.CFrame + Vector3.new(0, 3, 0)
+          task.wait(2)
+        end
+        -- Kill boss
+        for _,mob in pairs(workspace:GetChildren()) do
+          if mob:FindFirstChildOfClass("Humanoid") and mob.Name:lower():find("boss") then
+            mob:FindFirstChildOfClass("Humanoid").Health = 0
           end
         end
       end
@@ -89,170 +167,108 @@ BossTab:CreateToggle({
 BossTab:CreateButton({
   Name = "Kill Nearest Boss",
   Callback = function()
-    for _,mob in ipairs(workspace:GetChildren()) do
-      local h = mob:FindFirstChildOfClass("Humanoid")
-      if h and mob.Name:match("Boss") then
-        h.Health = 0
-        break
+    for _,mob in pairs(workspace:GetChildren()) do
+      if mob:FindFirstChildOfClass("Humanoid") and mob.Name:lower():find("boss") then
+        mob:FindFirstChildOfClass("Humanoid").Health = 0
       end
     end
   end
 })
 
-showVersion(BossTab)
-
--- Items tab (AutoFarm + Banknote + rare detection)
-local ItemsTab = Window:CreateTab("Items",4483362458)
-local ignoredPos = Vector3.new(-225,461,-1396)
-
-ItemsTab:CreateToggle({
-  Name = "AutoFarm All Items",
-  CurrentValue = true,
+-- Movement
+MovementTab:CreateToggle({
+  Name = "Speed Boost",
+  CurrentValue = false,
   Callback = function(v)
-    getgenv().AutoFarmItems = v
-    task.spawn(function()
-      while getgenv().AutoFarmItems do
-        task.wait(0.5)
-        for _,item in ipairs(workspace:GetChildren()) do
-          if item:IsA("Tool") and item:FindFirstChild("Handle")
-            and (item.Handle.Position-ignoredPos).Magnitude>15 then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = item.Handle.CFrame
-          end
-        end
+    getgenv().SpeedBoost = v
+    RunService.RenderStepped:Connect(function()
+      if getgenv().SpeedBoost and Humanoid then
+        Humanoid.WalkSpeed = 45
+      elseif Humanoid then
+        Humanoid.WalkSpeed = 16
       end
     end)
   end
 })
 
-ItemsTab:CreateToggle({
-  Name = "Auto Collect Banknote",
-  CurrentValue = true,
+MovementTab:CreateToggle({
+  Name = "Jump Boost",
+  CurrentValue = false,
   Callback = function(v)
-    getgenv().AutoBanknote = v
-    task.spawn(function()
-      while getgenv().AutoBanknote do
-        task.wait(1)
-        for _,c in ipairs({LocalPlayer.Backpack, LocalPlayer.Character}) do
-          if c then
-            for _,tool in ipairs(c:GetChildren()) do
-              if tool:IsA("Tool") and tool.Name=="Banknote" then
-                Humanoid:EquipTool(tool)
-                task.wait(0.2)
-                pcall(tool.Activate,tool)
-                break
-              end
-            end
-          end
-        end
+    getgenv().JumpBoost = v
+    RunService.RenderStepped:Connect(function()
+      if getgenv().JumpBoost and Humanoid then
+        Humanoid.JumpPower = 100
+      elseif Humanoid then
+        Humanoid.JumpPower = 50
       end
     end)
   end
 })
 
-task.spawn(function()
-  while true do
-    task.wait(5)
-    local t = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
-    if t then
-      if rareItems[t.Name] then
-        Rayfield:Notify({Title="Rare Item!",Content=t.Name.." is rare. Store it!"})
-      elseif veryRareItems[t.Name] then
-        Rayfield:Notify({Title="VERY RARE!",Content=t.Name.." is VERY RARE. Store it ASAP!"})
+MovementTab:CreateButton({
+  Name = "Enable Fly (toggle)",
+  Callback = function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/XPHk92R3"))()
+  end
+})
+
+MovementTab:CreateToggle({
+  Name = "Infinite Jump",
+  CurrentValue = false,
+  Callback = function(v)
+    getgenv().InfJump = v
+    UserInputService.JumpRequest:Connect(function()
+      if getgenv().InfJump and LocalPlayer.Character then
+        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
       end
-    end
-  end
-end)
-
-showVersion(ItemsTab)
-
--- Visual tab
-local VisualTab = Window:CreateTab("Visual",4483362458)
-VisualTab:CreateButton({Name="Enable Fullbright",Callback=function()
-  Lighting.Ambient,Lighting.Brightness,Lighting.ClockTime,Lighting.FogEnd,Lighting.GlobalShadows =
-  Color3.new(1,1,1),3,12,10000,false
-end})
-VisualTab:CreateButton({Name="FPS Booster",Callback=function()
-  for _,v in ipairs(workspace:GetDescendants()) do
-    if v:IsA("ParticleEmitter")or v:IsA("Trail")or v:IsA("Smoke")or v:IsA("Fire") then
-      v.Enabled=false
-    elseif v:IsA("Decal")or v:IsA("Texture") then
-      v.Transparency=1
-    elseif v:IsA("BasePart")then
-      v.Material=Enum.Material.SmoothPlastic
-      v.Reflectance=0
-    end
-  end
-end})
-showVersion(VisualTab)
-
--- Movement tab
-local MoveTab = Window:CreateTab("Movement",4483362458)
-
-MoveTab:CreateToggle({Name="Speed Boost",CurrentValue=false,Callback=function(v)
-  updateHumanoid()
-  if Humanoid then Humanoid.WalkSpeed=v and 75 or 16 end
-end})
-
-MoveTab:CreateToggle({Name="Jump Boost",CurrentValue=false,Callback=function(v)
-  updateHumanoid()
-  if Humanoid then Humanoid.JumpPower=v and 150 or 50 end
-end})
-
-getgenv().InfJump=false
-MoveTab:CreateToggle({Name="Infinite Jump",CurrentValue=false,Callback=function(v)
-  getgenv().InfJump=v
-end})
-UserInputService.JumpRequest:Connect(function()
-  if getgenv().InfJump and Humanoid then
-    Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-  end
-end)
-
-getgenv().FlyEnabled=false
-MoveTab:CreateToggle({Name="Fly (mobile)",CurrentValue=false,Callback=function(v)
-  getgenv().FlyEnabled=v
-  local char=LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-  local hrp=char:WaitForChild("HumanoidRootPart")
-  if v then
-    local bg=Instance.new("BodyGyro",hrp)
-    bg.P, bg.MaxTorque=9e4,Vector3.new(9e9,9e9,9e9)
-    local bv=Instance.new("BodyVelocity",hrp)
-    bv.MaxForce=Vector3.new(9e9,9e9,9e9)
-    local conn
-    conn=RunService.RenderStepped:Connect(function()
-      if not getgenv().FlyEnabled then
-        conn:Disconnect(); bg:Destroy(); bv:Destroy()
-        return
-      end
-      local mv=Vector3.zero
-      if UserInputService:IsKeyDown(Enum.KeyCode.W) then mv+=Camera.CFrame.LookVector end
-      if UserInputService:IsKeyDown(Enum.KeyCode.S) then mv-=Camera.CFrame.LookVector end
-      if UserInputService:IsKeyDown(Enum.KeyCode.A) then mv-=Camera.CFrame.RightVector end
-      if UserInputService:IsKeyDown(Enum.KeyCode.D) then mv+=Camera.CFrame.RightVector end
-      if UserInputService:IsKeyDown(Enum.KeyCode.Space) then mv+=Vector3.new(0,1,0) end
-      if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then mv-=Vector3.new(0,1,0) end
-      bg.CFrame=Camera.CFrame
-      bv.Velocity=mv.Unit*75
     end)
   end
-end})
-showVersion(MoveTab)
-
--- Misc tab
-local MiscTab = Window:CreateTab("Misc",4483362458)
-MiscTab:CreateButton({Name="Anti-AFK",Callback=function()
-  local vu=game:service("VirtualUser")
-  Players.LocalPlayer.Idled:connect(function()
-    vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-    wait(1); vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-  end)
-end})
-showVersion(MiscTab)
-
--- Credits tab
-local CreditsTab = Window:CreateTab("Credits",4483362458)
-CreditsTab:CreateParagraph({
-  Title="By skulldagrait",
-  Content="YouTube: youtube.com/@skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: discord.gg/wUtef63fms"
 })
-showVersion(CreditsTab)
+
+-- Visuals
+VisualsTab:CreateToggle({
+  Name = "Enable Fullbright",
+  CurrentValue = false,
+  Callback = function(v)
+    Lighting.Brightness = v and 3 or 1
+    Lighting.ClockTime = v and 12 or 14
+  end
+})
+
+VisualsTab:CreateToggle({
+  Name = "FPS Booster (Main Game)",
+  CurrentValue = false,
+  Callback = function(v)
+    for _, obj in pairs(workspace:GetDescendants()) do
+      if obj:IsA("Part") then
+        obj.Material = v and Enum.Material.SmoothPlastic or Enum.Material.Plastic
+      end
+    end
+  end
+})
+
+VisualsTab:CreateToggle({
+  Name = "FPS Booster (Boss)",
+  CurrentValue = false,
+  Callback = function(v)
+    for _, obj in pairs(workspace:GetDescendants()) do
+      if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+        obj.Enabled = not v
+      end
+    end
+  end
+})
+
+-- Misc
+MiscTab:CreateButton({
+  Name = "Anti-AFK",
+  Callback = function()
+    local VirtualUser = game:service("VirtualUser")
+    LocalPlayer.Idled:connect(function()
+      VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+      wait(1)
+      VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    end)
+  end
+})
