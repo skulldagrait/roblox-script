@@ -1,4 +1,4 @@
--- Murder VS Sheriff Hub (Codex Stable with Teams) by skulldagrait
+-- Murder VS Sheriff Hub (Codex Stable with Teams + Alive Check) by skulldagrait
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -25,7 +25,7 @@ local TeamShowNames = false
 -- UI
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
-    Name = "Murderer VS Sherrif Script - by skulldagrait",
+    Name = "MVS Hub - Codex Teams",
     LoadingTitle = "Loading...",
     LoadingSubtitle = "By skulldagrait",
     ConfigurationSaving = { Enabled = true, FolderName = "MVS_Hub", FileName = "Config" },
@@ -71,16 +71,23 @@ end
 
 local function isEnemy(player)
     if not player.Team or not LocalPlayer.Team then
-        return true -- no teams assigned means treat as enemy
+        return true
     end
     return player.Team ~= LocalPlayer.Team
+end
+
+local function isAlive(player)
+    local char = player.Character
+    if not char then return false end
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    return humanoid and humanoid.Health > 0
 end
 
 -- Get closest enemy (team aware)
 local function getClosestEnemyTeam()
     local closest, dist = nil, math.huge
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and isEnemy(player) then
+        if player ~= LocalPlayer and isEnemy(player) and isAlive(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local root = player.Character.HumanoidRootPart
             if isVisible(root) then
                 local mag = (Camera.CFrame.Position - root.Position).Magnitude
@@ -98,7 +105,7 @@ end
 local function getClosestEnemy()
     local closest, dist = nil, math.huge
     for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        if player ~= LocalPlayer and isAlive(player) and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             local root = player.Character.HumanoidRootPart
             if isVisible(root) then
                 local mag = (Camera.CFrame.Position - root.Position).Magnitude
@@ -121,9 +128,9 @@ local function updateHitboxes()
             local shouldExpand = false
 
             if TeamsMode then
-                shouldExpand = TeamExpandHitbox and isEnemy(player)
+                shouldExpand = TeamExpandHitbox and isEnemy(player) and isAlive(player)
             else
-                shouldExpand = ExpandHitbox
+                shouldExpand = ExpandHitbox and isAlive(player)
             end
 
             if shouldExpand then
@@ -190,7 +197,6 @@ RunService.RenderStepped:Connect(function()
     updateHitboxes()
 
     if TeamsMode then
-        -- Team Mode targeting
         local target = getClosestEnemyTeam()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local root = target.Character.HumanoidRootPart
@@ -205,10 +211,9 @@ RunService.RenderStepped:Connect(function()
             end
         end
 
-        -- ESP for enemies only
         if TeamESP then
             for _, player in pairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and isEnemy(player) and player.Character and player.Character:FindFirstChild("Head") then
+                if player ~= LocalPlayer and isEnemy(player) and isAlive(player) and player.Character and player.Character:FindFirstChild("Head") then
                     createESP(player, TeamShowNames)
                     if ESPObjects[player] then
                         ESPObjects[player].Enabled = true
@@ -224,7 +229,6 @@ RunService.RenderStepped:Connect(function()
             end
         end
     else
-        -- Non-team mode targeting
         local target = getClosestEnemy()
         if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
             local root = target.Character.HumanoidRootPart
@@ -239,10 +243,9 @@ RunService.RenderStepped:Connect(function()
             end
         end
 
-        -- ESP non-team mode
         if ESP then
             for _, player in pairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                if player ~= LocalPlayer and isAlive(player) and player.Character and player.Character:FindFirstChild("Head") then
                     createESP(player, ShowNames)
                     if ESPObjects[player] then
                         ESPObjects[player].Enabled = true
@@ -262,4 +265,4 @@ end)
 
 Players.PlayerRemoving:Connect(removeESP)
 
-print("✅ MVS Hub with Teams Mode Loaded!")
+print("✅ MVS Hub with Teams and Alive Check Loaded!")
