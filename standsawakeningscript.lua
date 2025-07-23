@@ -2,6 +2,13 @@
 -- Version v1.8
 
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local Window = Rayfield:CreateWindow({
   Name = "Stands Awakening Hub – by skulldagrait",
   LoadingTitle = "Loading...",
@@ -11,31 +18,16 @@ local Window = Rayfield:CreateWindow({
   KeySystem = false,
 })
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
-
 local rareItems = {
-  ["Camera"] = true, ["Pot"] = true, ["Dio's Skull"] = true, ["Uncanny Key"] = true,
-  ["Samurai Diary"] = true
+  ["Camera"] = true, ["Pot"] = true, ["Dio's Skull"] = true, ["Uncanny Key"] = true, ["Samurai Diary"] = true
 }
-local veryRareItems = {
-  ["Canny Key"] = true
-}
-
-local function updateHumanoid()
-  if LocalPlayer.Character then
-    return LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-  end
-end
+local veryRareItems = { ["Canny Key"] = true }
 
 local function showVersion(tab)
   tab:CreateParagraph({ Title = "Version", Content = "v1.8" })
 end
 
--- TELEPORT TAB
+-- Teleport Tab
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 local teleports = {
   {"Timmy NPC", Vector3.new(1394,584,-219)},
@@ -55,47 +47,14 @@ for _,tp in ipairs(teleports) do
   TeleportTab:CreateButton({
     Name = tp[1],
     Callback = function()
-      if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(tp[2])
-      end
+      local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+      if hrp then hrp.CFrame = CFrame.new(tp[2]) end
     end
   })
 end
 showVersion(TeleportTab)
 
--- BOSS TAB
-local BossTab = Window:CreateTab("Boss", 4483362458)
-BossTab:CreateToggle({
-  Name = "AutoBoss (v1.8)",
-  CurrentValue = false,
-  Callback = function(v)
-    getgenv().AutoBoss = v
-    task.spawn(function()
-      while getgenv().AutoBoss do
-        task.wait(1)
-        for _, obj in ipairs(workspace:GetDescendants()) do
-          if obj:IsA("ProximityPrompt") then
-            fireproximityprompt(obj)
-            break
-          elseif obj:IsA("ClickDetector") then
-            fireclickdetector(obj)
-            break
-          end
-        end
-        task.wait(3)
-        for _, mob in ipairs(workspace:GetChildren()) do
-          local hum = mob:FindFirstChildOfClass("Humanoid")
-          if hum and mob.Name:lower():find("boss") then
-            hum.Health = 0
-          end
-        end
-      end
-    end)
-  end
-})
-showVersion(BossTab)
-
--- ITEMS TAB
+-- Items Tab
 local ItemsTab = Window:CreateTab("Items", 4483362458)
 local ignoredPos = Vector3.new(-225, 461, -1396)
 ItemsTab:CreateToggle({
@@ -125,16 +84,19 @@ ItemsTab:CreateToggle({
     task.spawn(function()
       while getgenv().AutoBanknote do
         task.wait(1)
-        local inv = LocalPlayer:GetChildren()
-        for _,cont in pairs(inv) do
-          if cont:IsA("Backpack") or cont:IsA("Model") then
-            local note = cont:FindFirstChild("Banknote")
-            if note and note:IsA("Tool") then
-              LocalPlayer.Character.Humanoid:EquipTool(note)
-              task.wait(0.25)
-              pcall(function() note:Activate() end)
-            end
+        for _,child in pairs(LocalPlayer:GetChildren()) do
+          if child:IsA("Tool") and child.Name == "Banknote" then
+            LocalPlayer.Character.Humanoid:EquipTool(child)
+            task.wait(0.25)
+            pcall(function() child:Activate() end)
           end
+        end
+        local bp = LocalPlayer:FindFirstChild("Backpack")
+        if bp and bp:FindFirstChild("Banknote") then
+          local note = bp:FindFirstChild("Banknote")
+          LocalPlayer.Character.Humanoid:EquipTool(note)
+          task.wait(0.25)
+          pcall(function() note:Activate() end)
         end
       end
     end)
@@ -155,63 +117,32 @@ task.spawn(function()
 end)
 showVersion(ItemsTab)
 
--- MOVEMENT TAB
-local MovementTab = Window:CreateTab("Movement", 4483362458)
-MovementTab:CreateToggle({
-  Name = "Fly",
-  CurrentValue = false,
-  Callback = function(v)
-    getgenv().Flying = v
-    local bodyGyro, bodyVel
-    local hrp = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-    if v then
-      bodyGyro = Instance.new("BodyGyro", hrp)
-      bodyGyro.P = 9e4
-      bodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-      bodyGyro.cframe = hrp.CFrame
-      bodyVel = Instance.new("BodyVelocity", hrp)
-      bodyVel.velocity = Vector3.zero
-      bodyVel.maxForce = Vector3.new(9e9, 9e9, 9e9)
-      RunService.RenderStepped:Connect(function()
-        if not getgenv().Flying then return end
-        local move = Vector3.zero
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += hrp.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then move -= hrp.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then move -= hrp.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += hrp.CFrame.RightVector end
-        move += Vector3.new(0, 0.5, 0)
-        bodyVel.velocity = move * 50
-        bodyGyro.cframe = hrp.CFrame
-      end)
-    else
-      if bodyGyro then bodyGyro:Destroy() end
-      if bodyVel then bodyVel:Destroy() end
-    end
-  end
-})
-MovementTab:CreateToggle({
-  Name = "Infinite Jump",
-  CurrentValue = false,
-  Callback = function(v)
-    getgenv().InfJump = v
-  end
-})
-UserInputService.JumpRequest:Connect(function()
-  if getgenv().InfJump and LocalPlayer.Character then
-    LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-  end
-end)
-showVersion(MovementTab)
-
--- MISC TAB
-local MiscTab = Window:CreateTab("Misc", 4483362458)
-MiscTab:CreateButton({
-  Name = "Anti-AFK",
+-- Boss Tab
+local BossTab = Window:CreateTab("Boss", 4483362458)
+BossTab:CreateButton({
+  Name = "Start AutoBoss",
   Callback = function()
-    for _, v in pairs(getconnections(LocalPlayer.Idled)) do
-      v:Disable()
+    local bossRemote = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Enter")
+    if bossRemote then
+      bossRemote:FireServer()
+      task.wait(3)
+      local sword = LocalPlayer.Backpack:FindFirstChild("KnightsSword") or LocalPlayer.Character:FindFirstChild("KnightsSword")
+      if sword then
+        if LocalPlayer.Backpack:FindFirstChild("KnightsSword") then
+          LocalPlayer.Character.Humanoid:EquipTool(sword)
+        end
+        -- Big hitbox
+        local handle = sword:FindFirstChild("Handle")
+        if handle then handle.Size = Vector3.new(25,25,25) end
+        -- Auto swing
+        task.spawn(function()
+          while true do
+            task.wait(0.2)
+            if sword then pcall(function() sword:Activate() end) end
+          end
+        end)
+      end
     end
-    Rayfield:Notify({ Title = "Anti-AFK Enabled", Content = "You will no longer get kicked for being idle." })
   end
 })
-showVersion(MiscTab)
+showVersion(BossTab)
