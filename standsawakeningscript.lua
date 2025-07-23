@@ -19,6 +19,24 @@ local HumanoidRootPart = LocalPlayer.Character and LocalPlayer.Character:FindFir
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 
+-- Troll Tab
+local TrollTab = Window:CreateTab("Troll", 4483362458)
+
+TrollTab:CreateToggle({
+    Name = "Infinite Heirophant Emerald Splash",
+    CurrentValue = false,
+    Callback = function(Value)
+        _G.SpamEmeralds = Value
+        while _G.SpamEmeralds do
+            task.wait(0.1)
+            local tool = LocalPlayer.Character:FindFirstChild("HeirophantGreen")
+            if tool then
+                tool:Activate()
+            end
+        end
+    end,
+})
+
 -- Teleport Tab
 local TeleportTab = Window:CreateTab("Teleport", 4483362458)
 local teleports = {
@@ -45,6 +63,41 @@ for _,tp in pairs(teleports) do
         end,
     })
 end
+
+-- OP Tab
+local OP = Window:CreateTab("OP", 4483362458)
+
+OP:CreateToggle({
+    Name = "God Mode (Toggle)",
+    CurrentValue = false,
+    Callback = function(Value)
+        if LocalPlayer.Character then
+            local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.Name = Value and "1" or "Humanoid"
+            end
+        end
+    end,
+})
+
+-- Beta Tab
+local Beta = Window:CreateTab("Beta", 4483362458)
+
+Beta:CreateButton({
+    Name = "Infinite Ability Usage",
+    Callback = function()
+        local mt = getrawmetatable(game)
+        setreadonly(mt, false)
+        local __namecall = mt.__namecall
+        mt.__namecall = newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            if tostring(self) == "Cooldown" and method == "InvokeServer" then
+                return wait(0.00001) -- spam invoke to avoid actual cooldowns
+            end
+            return __namecall(self, ...)
+        end)
+    end
+})
 
 -- Visual Tab
 local VisualTab = Window:CreateTab("Visual", 4483362458)
@@ -97,10 +150,9 @@ BossTab:CreateButton({
         if Sword then
             local handle = Sword:FindFirstChild("Handle")
             handle.Massless = true
-            handle.Size = Vector3.new(20, 20, 20) -- moderate stealth hitbox
+            handle.Size = Vector3.new(20, 20, 20)
         end
 
-        -- Smooth Dodge System
         task.spawn(function()
             while task.wait(0.1) do
                 for _,v in pairs(Workspace:GetDescendants()) do
@@ -121,7 +173,6 @@ BossTab:CreateButton({
             end
         end)
 
-        -- Auto Movement
         task.spawn(function()
             while Attacking and Attacking.Value == false do
                 task.wait(0.1)
@@ -140,10 +191,9 @@ BossTab:CreateButton({
             end
         end)
 
-        -- Auto Attack Fast with randomization
         task.spawn(function()
             while Attacking and Attacking.Value == false do
-                task.wait(math.random(8,12)/100) -- random between 0.08-0.12
+                task.wait(math.random(8,12)/100)
                 if Sword then
                     Sword:Activate()
                 end
