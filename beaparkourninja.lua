@@ -1,11 +1,11 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
-local autoKill = false
-local killCount = 0
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
 local virtualUser = game:GetService("VirtualUser")
 local tweenService = game:GetService("TweenService")
+
+local autoKill = false
+local killCount = 0
 
 local Window = Rayfield:CreateWindow({
     Name = "Be a Parkour Ninja – By skulldagrait",
@@ -62,27 +62,24 @@ Main:CreateToggle({
         getgenv().GODLYSKIDDERXISASKID = state
 
         if state then
-            for _, p in pairs(Players:GetPlayers()) do
-                if p ~= plr and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                    local root = p.Character:FindFirstChild("HumanoidRootPart")
-                    root.Size = Vector3.new(40, 40, 40)
-                    root.Transparency = 0.7
-                    root.Material = Enum.Material.Neon
-                    root.CanCollide = false
-                end
-            end
-
             task.spawn(function()
                 while autoKill do
-                    local candidates = {}
+                    local validTargets = {}
                     for _, p in pairs(Players:GetPlayers()) do
                         if p ~= plr and p.Character and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
-                            table.insert(candidates, p)
+                            local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                            if hrp then
+                                hrp.Size = Vector3.new(40, 40, 40)
+                                hrp.Transparency = 1
+                                hrp.CanCollide = false
+                                hrp.Material = Enum.Material.ForceField
+                                table.insert(validTargets, p)
+                            end
                         end
                     end
 
-                    if #candidates > 0 then
-                        local target = candidates[math.random(1, #candidates)]
+                    if #validTargets > 0 then
+                        local target = validTargets[math.random(1, #validTargets)]
                         local hrp = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
                         if hrp and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
                             local tween = tweenService:Create(
@@ -93,28 +90,45 @@ Main:CreateToggle({
                             tween:Play()
                             tween.Completed:Wait()
 
-                            for i = 1, 3 do
+                            for _ = 1, 3 do
                                 virtualUser:Button1Down(Vector2.new(0.9, 0.9))
                                 virtualUser:Button1Up(Vector2.new(0.9, 0.9))
                                 task.wait(0.1)
                             end
 
-                            if target.Character and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health <= 0 then
+                            if target.Character.Humanoid.Health <= 0 then
                                 killCount += 1
                                 KillDisplay:Set({Content = "Kills: " .. killCount})
                             end
                         end
+                    else
+                        task.wait(0.5)
                     end
-                    task.wait(0.4)
                 end
             end)
         end
     end
 })
 
-local Credits = Window:CreateTab("📜 Credits", 4483362458)
-
-Credits:CreateParagraph({
-    Title = "By skulldagrait",
-    Content = "Discord: skulldagrait\nYouTube: @skulldagrait\nGitHub: github.com/skulldagrait"
+Window:CreateTab("📜 Credits", 4483362458):CreateParagraph({
+    Title = "Credits",
+    Content = "By Skulldagrait\nDiscord: skulldagrait\nYouTube: @skulldagrait\nGitHub: github.com/skulldagrait"
 })
+
+task.spawn(function()
+    while true do
+        if sethiddenproperty then
+            pcall(function()
+                sethiddenproperty(Players.LocalPlayer, "SimulationRadius", math.huge)
+            end)
+        end
+
+        game:GetService("Stats").PerformanceStats:Destroy()
+        for _, v in pairs(game.CoreGui:GetDescendants()) do
+            if v:IsA("TextLabel") and v.Text:match("You are too laggy") then
+                v:Destroy()
+            end
+        end
+        task.wait(2)
+    end
+end)
