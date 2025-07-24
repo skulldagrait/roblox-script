@@ -1,7 +1,3 @@
--- Arsenal | by skulldagrait
--- Load with:
--- loadstring(game:HttpGet("https://raw.githubusercontent.com/skulldagrait/Roblox-scripts/main/arsenal.lua"))()
-
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -11,7 +7,6 @@ local RunService = game:GetService("RunService")
 local ESPEnabled, TracersEnabled, HealthEnabled = false, false, false
 local SilentAimEnabled, NoRecoilEnabled, NoSpreadEnabled, NoDelayEnabled = false, false, false, false
 
--- GUI Setup
 local Window = Rayfield:CreateWindow({
     Name = "Arsenal | by skulldagrait",
     ConfigurationSaving = { Enabled = false },
@@ -30,7 +25,6 @@ ESPTab:CreateToggle({ Name = "Enable ESP", CurrentValue = false, Callback = func
 ESPTab:CreateToggle({ Name = "Enable Tracers", CurrentValue = false, Callback = function(v) TracersEnabled = v end })
 ESPTab:CreateToggle({ Name = "Show Health Bars", CurrentValue = false, Callback = function(v) HealthEnabled = v end })
 
--- Silent Aim Hook
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
 setreadonly(mt, false)
@@ -59,7 +53,6 @@ mt.__namecall = newcclosure(function(self, ...)
 end)
 setreadonly(mt, true)
 
--- Recoil / Spread / Fire Delay Patches
 local function patch()
     local lpchar = LocalPlayer.Character
     if not lpchar then return end
@@ -81,7 +74,6 @@ local function patch()
 end
 RunService.Heartbeat:Connect(patch)
 
--- ESP Implementation
 local DrawingNew = Drawing.new
 local espBoxes, espTracers, espHealthBars = {}, {}, {}
 
@@ -136,5 +128,3 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-
-print("Arsenal script loaded by @skulldagrait")
