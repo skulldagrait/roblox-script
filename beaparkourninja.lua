@@ -1,10 +1,10 @@
-local players = game:GetService("Players")
+local Players = game:GetService("Players")
 local plr = game.Players.LocalPlayer
-getgenv().godlyskidderxisaskid = true
+getgenv().GODLYSKIDDERXISASKID = true
 
-while getgenv().godlyskidderxisaskid do
-    for _, v in pairs(players:GetPlayers()) do
-        if v.Character and v.Character:FindFirstChildOfClass("Humanoid") and v.Character.Humanoid.Health ~= 0 and v ~= players.LocalPlayer then
+while getgenv().GODLYSKIDDERXISASKID do
+    for _, v in pairs(Players:GetPlayers()) do
+        if v.Character and v.Character:FindFirstChildOfClass("Humanoid") and v.Character.Humanoid.Health ~= 0 and v ~= Players.LocalPlayer then
             repeat
                 game:GetService("VirtualUser"):Button1Down(Vector2.new(0.9, 0.9))
                 game:GetService("VirtualUser"):Button1Up(Vector2.new(0.9, 0.9))
@@ -14,7 +14,7 @@ while getgenv().godlyskidderxisaskid do
                     game:GetService("RunService").Stepped:Connect(function()
                         if getgenv().r6noclip == true then
                             game.Players.LocalPlayer.Character.Head.CanCollide = false
-game.Players.LocalPlayer.Character.Torso.CanCollide = false
+                            game.Players.LocalPlayer.Character.Torso.CanCollide = false
                             game.Players.LocalPlayer.Character["Left Leg"].CanCollide = false
                             game.Players.LocalPlayer.Character["Right Leg"].CanCollide = false
                         end
@@ -32,7 +32,7 @@ game.Players.LocalPlayer.Character.Torso.CanCollide = false
                 local tween = game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character.HumanoidRootPart, TweenInfo.new(Time), {CFrame = CFrameEnd})
                 tween:Play()
                 task.wait()
-tween.Completed:Wait()
+                tween.Completed:Wait()
 
                 game.Players.LocalPlayer.Character.Head.Anchored = true
                 wait(0.03)
@@ -41,6 +41,10 @@ tween.Completed:Wait()
                 if game.Players.LocalPlayer.Character.Humanoid.Health == 0 then
                     game:GetService("ReplicatedStorage").RemoteTriggers.SpawnIn:FireServer()
                 end
+
+                -- Set larger hitbox size
+                local humanoid = v.Character.Humanoid
+                humanoid:SetHipSize(Vector3.new(5, 5, 5)) -- Adjust the size as needed
 
             until v.Character.Humanoid.Health <= 0
         end
