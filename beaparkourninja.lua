@@ -2,6 +2,11 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local autoKill = false
 local killCount = 0
+local Players = game:GetService("Players")
+local plr = Players.LocalPlayer
+local cam = workspace.CurrentCamera
+local virtualUser = game:GetService("VirtualUser")
+local tweenService = game:GetService("TweenService")
 
 local Window = Rayfield:CreateWindow({
     Name = "Be a Parkour Ninja – By skulldagrait",
@@ -51,84 +56,94 @@ local KillDisplay = Main:CreateParagraph({
 })
 
 Main:CreateToggle({
-    Name = "Auto-Kill + Hitbox Expand (R6 Compatible)",
+    Name = "Auto-Kill + Huge Hitboxes (Looping)",
     CurrentValue = false,
     Callback = function(state)
         autoKill = state
         getgenv().GODLYSKIDDERXISASKID = state
+
         if state then
             task.spawn(function()
-                local Players = game:GetService("Players")
-                local plr = Players.LocalPlayer
-                local cam = workspace.CurrentCamera
-                local virtualUser = game:GetService("VirtualUser")
-
-                plr.CharacterAdded:Connect(function(char)
-                    repeat task.wait() until char:FindFirstChild("Humanoid")
-                    cam.CameraSubject = char.Humanoid
-                    cam.CameraType = Enum.CameraType.Custom
-                    task.wait(1)
-                end)
-
-                while getgenv().GODLYSKIDDERXISASKID do
-                    for _, v in pairs(Players:GetPlayers()) do
-                        if v ~= plr and v.Character and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
-                            local root = v.Character:FindFirstChild("HumanoidRootPart")
+                while autoKill do
+                    for _, enemy in pairs(Players:GetPlayers()) do
+                        if enemy ~= plr and enemy.Character and enemy.Character:FindFirstChild("Humanoid") and enemy.Character.Humanoid.Health > 0 then
+                            local root = enemy.Character:FindFirstChild("HumanoidRootPart")
                             if root then
-                                root.Size = Vector3.new(15, 15, 15)
-                                root.Transparency = 0.75
+                                root.Size = Vector3.new(40, 40, 40)
+                                root.Transparency = 0.7
                                 root.Material = Enum.Material.Neon
                                 root.CanCollide = false
                             end
+                        end
+                    end
+                    task.wait(1)
+                end
+            end)
 
+            task.spawn(function()
+                while autoKill do
+                    for _, target in pairs(Players:GetPlayers()) do
+                        if target ~= plr and target.Character and target.Character:FindFirstChild("Humanoid") and target.Character.Humanoid.Health > 0 then
                             repeat
-                                virtualUser:Button1Down(Vector2.new(0.9, 0.9))
-                                virtualUser:Button1Up(Vector2.new(0.9, 0.9))
+                                pcall(function()
+                                    virtualUser:Button1Down(Vector2.new(0.9, 0.9))
+                                    virtualUser:Button1Up(Vector2.new(0.9, 0.9))
 
-                                if plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
-                                    getgenv().r6noclip = true
-                                    game:GetService("RunService").Stepped:Connect(function()
-                                        if getgenv().r6noclip and plr.Character then
-                                            local c = plr.Character
-                                            if c:FindFirstChild("Head") then c.Head.CanCollide = false end
-                                            if c:FindFirstChild("Torso") then c.Torso.CanCollide = false end
-                                            if c:FindFirstChild("Left Leg") then c["Left Leg"].CanCollide = false end
-                                            if c:FindFirstChild("Right Leg") then c["Right Leg"].CanCollide = false end
-                                        end
-                                    end)
-                                end
+                                    if plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.RigType == Enum.HumanoidRigType.R6 then
+                                        game:GetService("RunService").Stepped:Connect(function()
+                                            if plr.Character then
+                                                local c = plr.Character
+                                                if c:FindFirstChild("Head") then c.Head.CanCollide = false end
+                                                if c:FindFirstChild("Torso") then c.Torso.CanCollide = false end
+                                                if c:FindFirstChild("Left Leg") then c["Left Leg"].CanCollide = false end
+                                                if c:FindFirstChild("Right Leg") then c["Right Leg"].CanCollide = false end
+                                            end
+                                        end)
+                                    end
 
-                                local croot = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-                                if croot and root then
-                                    local tween = game:GetService("TweenService"):Create(
-                                        croot,
-                                        TweenInfo.new(0.29),
-                                        {CFrame = root.CFrame}
-                                    )
-                                    tween:Play()
-                                    tween.Completed:Wait()
-                                    if plr.Character:FindFirstChild("Head") then
+                                    if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and target.Character:FindFirstChild("HumanoidRootPart") then
+                                        local tween = tweenService:Create(
+                                            plr.Character.HumanoidRootPart,
+                                            TweenInfo.new(0.29),
+                                            {CFrame = target.Character.HumanoidRootPart.CFrame}
+                                        )
+                                        tween:Play()
+                                        tween.Completed:Wait()
+                                    end
+
+                                    if plr.Character and plr.Character:FindFirstChild("Head") then
                                         plr.Character.Head.Anchored = true
                                         task.wait(0.03)
                                         plr.Character.Head.Anchored = false
                                     end
-                                end
-
-                                if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") and plr.Character.Humanoid.Health <= 0 then
-                                    game:GetService("ReplicatedStorage").RemoteTriggers.SpawnIn:FireServer()
-                                    repeat task.wait(0.5) until plr.Character and plr.Character:FindFirstChild("Humanoid")
-                                    cam.CameraSubject = plr.Character:FindFirstChild("Humanoid")
-                                    cam.CameraType = Enum.CameraType.Custom
-                                end
-
+                                end)
                                 task.wait()
-                            until not v.Character or v.Character.Humanoid.Health <= 0 or not getgenv().GODLYSKIDDERXISASKID
+                            until not target.Character or target.Character.Humanoid.Health <= 0 or not autoKill
 
                             killCount += 1
                             KillDisplay:Set({Content = "Kills: " .. killCount})
                         end
                     end
-                    task.wait()
+                    task.wait(1)
+                end
+            end)
+
+            plr.CharacterAdded:Connect(function(char)
+                repeat task.wait() until char:FindFirstChild("Humanoid")
+                cam.CameraSubject = char.Humanoid
+                cam.CameraType = Enum.CameraType.Custom
+                task.wait(1)
+            end)
+
+            task.spawn(function()
+                while autoKill do
+                    if plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health <= 0 then
+                        game:GetService("ReplicatedStorage").RemoteTriggers.SpawnIn:FireServer()
+                        repeat task.wait() until plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character.Humanoid.Health > 0
+                        cam.CameraSubject = plr.Character.Humanoid
+                        cam.CameraType = Enum.CameraType.Custom
+                    end
+                    task.wait(0.5)
                 end
             end)
         end
