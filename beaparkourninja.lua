@@ -1,7 +1,6 @@
 local Players = game:GetService("Players")
 local plr = game.Players.LocalPlayer
 getgenv().GODLYSKIDDERXISASKID = true -- u cant toggle this its broken :/
-
 while getgenv().GODLYSKIDDERXISASKID do
 for _, v in pairs(Players:GetPlayers()) do
 if
@@ -50,3 +49,4 @@ until v.Character.Humanoid.Health <= 0
 end
 end
 task.wait()
+end
