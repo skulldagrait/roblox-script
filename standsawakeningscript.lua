@@ -1,191 +1,226 @@
--- v2.0 Stands Awakening Hub by skulldagrait
-repeat task.wait() until game:IsLoaded()
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local VirtualUser = game:GetService("VirtualUser")
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
 
--- Setup & GUI
-local Players, RunService = game:GetService("Players"), game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-local Window = Rayfield:CreateWindow({Name="SA Hub v2.0", LoadingTitle="SA Hub Loading...", ConfigurationSaving={Enabled=true,FolderName="SA_Hub",FileName="Config"}})
+local Window = Fluent:CreateWindow({
+    Title = "Stands Awakening - By skulldagrait v2.1",
+    SubTitle = "By skulldagrait",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = false,
+    Theme = "Dark",
+    MinimizeKey = nil
+})
 
-local tabs = {Main=Window:CreateTab("Main",4483362458), Stand=Window:CreateTab("Stand",4483362458),
-              Boss=Window:CreateTab("Boss",4483362458), Items=Window:CreateTab("Items",4483362458),
-              Movement=Window:CreateTab("Movement",4483362458), Visual=Window:CreateTab("Visuals",4483362458),
-              Teleport=Window:CreateTab("Teleport",4483362458), Misc=Window:CreateTab("Misc",4483362458),
-              Credits=Window:CreateTab("Credits",4483362458)}
+Fluent:SetTheme({
+    Background = Color3.fromRGB(20, 20, 20),
+    Text = Color3.fromRGB(255, 255, 255),
+    Accent = Color3.fromRGB(180, 40, 180)
+})
 
-local function showVersion(tab) tab:CreateParagraph({Title="Version",Content="v2.0"}) end
+local Tabs = {
+    Main = Window:AddTab({Title = "Main - v2.1", Icon = "box"}),
+    Visuals = Window:AddTab({Title = "Visuals - v2.1", Icon = "eye"}),
+    Teleport = Window:AddTab({Title = "Teleport - v2.1", Icon = "map-pin"}),
+    Server = Window:AddTab({Title = "Server - v2.1", Icon = "server"}),
+    Settings = Window:AddTab({Title = "Settings - v2.1", Icon = "settings"}),
+    Credits = Window:AddTab({Title = "Credits - v2.1", Icon = "info"})
+}
 
--- Main Tab
-tabs.Main:CreateButton({Name="InfiniteYield",Callback=function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end})
-showVersion(tabs.Main)
+Tabs.Credits:AddParagraph({
+    Title = "By skulldagrait",
+    Content = "Designed, scripted and developed by skulldagrait."
+})
 
--- Stand Reroll Tab
-local standNames = {"The World","Star Platinum","Crazy Diamond","King Crimson","Gold Experience","Stone Free","Silver Chariot","Hierophant Green","Magician's Red","Hermit Purple"} -- etc full list as needed
-local selectedStand = standNames[1]
-tabs.Stand:CreateDropdown({Name="Select Stand",Options=standNames,CurrentOption=selectedStand,Callback=function(v) selectedStand=v end})
-local autoReroll = false
-tabs.Stand:CreateToggle({Name="Auto Stand Reroll",CurrentValue=false,Callback=function(v)
-    autoReroll = v
-    spawn(function()
-        while autoReroll do
-            -- spam arrow
-            game.ReplicatedStorage.Events.ThrowArrow:FireServer()
-            -- spam rokaka
-            game.ReplicatedStorage.Events.ThrowRokaka:FireServer()
-            -- check current stand
-            local stand = LocalPlayer:FindFirstChild("Stand")
-            if stand and stand.Value == selectedStand then
-                Rayfield:Notify({Title="Success",Content="Got "..selectedStand})
-                autoReroll = false
+Tabs.Visuals:AddToggle("Fullbright", {
+    Title = "Fullbright",
+    Default = false,
+    Callback = function(state)
+        Lighting.Ambient = state and Color3.new(1,1,1) or Color3.new(0.5,0.5,0.5)
+        Lighting.Brightness = state and 2 or 1
+        Lighting.GlobalShadows = not state
+    end
+})
+
+Tabs.Visuals:AddButton({
+    Title = "FPS Boost",
+    Callback = function()
+        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+        Lighting.GlobalShadows = false
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Material ~= Enum.Material.ForceField then
+                v.Material = Enum.Material.Plastic
+                v.Reflectance = 0
+            elseif v:IsA("Decal") then
+                v.Transparency = 1
+            end
+        end
+    end
+})
+
+local speedValue = 0
+local speedConnection
+local function updateSpeed()
+    if speedConnection then speedConnection:Disconnect() end
+    speedConnection = RunService.Heartbeat:Connect(function()
+        if character and humanoid and humanoid.MoveDirection.Magnitude > 0 then
+            character:TranslateBy(humanoid.MoveDirection * speedValue * 0.1)
+        end
+    end)
+end
+
+Tabs.Main:AddSlider("SpeedSlider", {
+    Title = "Speed Boost",
+    Default = 0,
+    Min = 0,
+    Max = 10,
+    Rounding = 1,
+    Callback = function(value)
+        speedValue = value
+        updateSpeed()
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = "Steal Brainrots",
+    Callback = function()
+        local pos = CFrame.new(0, -500, 0)
+        local startTime = os.clock()
+        while os.clock() - startTime < 1 do
+            if character and character:FindFirstChild("HumanoidRootPart") then
+                character.HumanoidRootPart.CFrame = pos
+                task.wait()
+            end
+        end
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = "Invisibility Glitch",
+    Callback = function()
+        local cloak = character:FindFirstChild("Invisibility Cloak")
+        if cloak and cloak:GetAttribute("SpeedModifier") == 2 then
+            cloak.Parent = workspace
+            Fluent:Notify({Title = "Success", Content = "Invisibility glitch activated!", Duration = 3})
+        else
+            Fluent:Notify({Title = "Error", Content = "Equip Invisibility Cloak first!", Duration = 3})
+        end
+    end
+})
+
+Tabs.Teleport:AddButton({
+    Title = "Teleport to Spawn",
+    Callback = function()
+        local spawn = workspace:FindFirstChild("SpawnLocation") or workspace:FindFirstChild("Spawn")
+        if spawn and character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = CFrame.new(spawn.Position + Vector3.new(0, 5, 0))
+        end
+    end
+})
+
+Tabs.Teleport:AddButton({
+    Title = "Teleport to Bank",
+    Callback = function()
+        local bank = workspace:FindFirstChild("Bank")
+        if bank and character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = bank.CFrame + Vector3.new(0, 5, 0)
+        end
+    end
+})
+
+Tabs.Teleport:AddButton({
+    Title = "Teleport to Boss Arena",
+    Callback = function()
+        local arena = workspace:FindFirstChild("BossArena")
+        if arena and character and character:FindFirstChild("HumanoidRootPart") then
+            character.HumanoidRootPart.CFrame = arena.CFrame + Vector3.new(0, 5, 0)
+        end
+    end
+})
+
+Tabs.Server:AddButton({
+    Title = "Server Hop",
+    Callback = function()
+        local servers = {}
+        local data = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+        for _, server in ipairs(data.data) do
+            if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                table.insert(servers, server.id)
+            end
+        end
+        if #servers > 0 then
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)])
+        else
+            Fluent:Notify({Title = "Error", Content = "No available servers found", Duration = 3})
+        end
+    end
+})
+
+Tabs.Server:AddButton({
+    Title = "Rejoin Server",
+    Callback = function()
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = "Attempt Dupe",
+    Callback = function()
+        local target = nil
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= player then
+                target = p
                 break
             end
-            task.wait(0.1)
         end
-    end)
-end})
-tabs.Stand:CreateButton({Name="Teleport to Safe Zone",Callback=function()
-    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp then hrp.CFrame = CFrame.new(0,10003,0) end
-end})
-showVersion(tabs.Stand)
-
--- Boss Tab
-local bossEnabled=false
-local bossConn1, bossConn2
-tabs.Boss:CreateToggle({Name="AutoBoss",CurrentValue=false,Callback=function(v)
-    bossEnabled=v
-    if v then
-        for _,c in pairs(getconnections(LocalPlayer.Idled)) do c:Disable() end
-        local ws=game.Workspace; local chr=LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local hrp=chr:WaitForChild("HumanoidRootPart"); local humanoid=chr:WaitForChild("Humanoid")
-        local dead=ws:WaitForChild("Dead"); local obby=ws:WaitForChild("ObbyW")
-        local phase=ws:WaitForChild("BossPhase"); local health=ws:WaitForChild("TrollHealth")
-        local sword
-        local function prep()
-            sword = chr:FindFirstChild("KnightsSword") or LocalPlayer.Backpack:FindFirstChild("KnightsSword")
-            if sword then sword.Parent=chr; local h=sword.Handle; h.Size=Vector3.new(20,20,500); h.Massless=true; if not h:FindFirstChild("SB") then Instance.new("SelectionBox",h).Name="SB" end end
+        if target then
+            game:GetService("ReplicatedStorage"):WaitForChild("DefaultChatSystemChatEvents")
+                :WaitForChild("SayMessageRequest"):FireServer("!trade " .. target.Name, "All")
+            Fluent:Notify({Title = "Attempted Dupe", Content = "Trade sent to " .. target.Name, Duration = 4})
+        else
+            Fluent:Notify({Title = "Error", Content = "No other players found", Duration = 3})
         end
-        prep()
-        bossConn1 = RunService.RenderStepped:Connect(function()
-            if not bossEnabled or dead.Value then bossConn1:Disconnect(); return end
-            if obby.Value then hrp.CFrame = CFrame.new(20.45,113.24,196.61)
-            elseif phase.Value=="None" then hrp.CFrame=CFrame.new(-5.47,-4.45,248.20)
-            else hrp.CFrame=CFrame.new(-19.89,-4.77,142.49) end
-        end)
-        bossConn2 = RunService.RenderStepped:Connect(function()
-            if not bossEnabled or dead.Value then bossConn2:Disconnect(); return end
-            if sword then sword:Activate() end
-        end)
-    else
-        if bossConn1 then bossConn1:Disconnect() end
-        if bossConn2 then bossConn2:Disconnect() end
     end
-end})
-showVersion(tabs.Boss)
+})
 
--- Items Tab
-tabs.Items:CreateToggle({Name="AutoFarm Items",CurrentValue=false,Callback=function(v)
-    getgenv().AutoFarm=v
-    spawn(function()
-        while getgenv().AutoFarm do
-            for _,it in pairs(game.Workspace:GetChildren()) do
-                if it:IsA("Tool") and it:FindFirstChild("Handle") and (it.Handle.Position - Vector3.new(-225,461,-1396)).Magnitude>15 then
-                    LocalPlayer.Character.HumanoidRootPart.CFrame=it.Handle.CFrame
-                end
-            end
-            task.wait(0.5)
-        end
-    end)
-end})
-tabs.Items:CreateToggle({Name="Auto Collect Banknote",CurrentValue=false,Callback=function(v)
-    getgenv().AutoBank=v
-    spawn(function()
-        while getgenv().AutoBank do
-            for _,c in pairs({LocalPlayer.Backpack,LocalPlayer.Character}) do
-                for _,tool in pairs(c:GetChildren()) do
-                    if tool.Name=="Banknote" then
-                        LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):EquipTool(tool)
-                        task.wait(0.25)
-                        pcall(tool.Activate,tool)
-                    end
-                end
-            end
-            task.wait(1)
-        end
-    end)
-end})
-showVersion(tabs.Items)
+local sessionTimer = Tabs.Settings:AddParagraph({
+    Title = "Session Time: 00:00:00",
+    Content = ""
+})
 
--- Teleport Tab
-local teleports={{"Timmy",1394,584,-219},{"Sans",1045,583,-442},{"Safe Zone",0,10003,0}}
-for _,t in ipairs(teleports) do
-    tabs.Teleport:CreateButton({Name=t[1],Callback=function()
-        LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame=CFrame.new(t[2],t[3],t[4])
-    end})
-end
-showVersion(tabs.Teleport)
-
--- Movement Tab
-tabs.Movement:CreateToggle({Name="Speed Boost",CurrentValue=false,Callback=function(v) LocalPlayer.Character.Humanoid.WalkSpeed = v and 75 or 16 end})
-tabs.Movement:CreateToggle({Name="Jump Boost",CurrentValue=false,Callback=function(v) LocalPlayer.Character.Humanoid.JumpPower = v and 150 or 50 end})
-getgenv().InfJump=false
-tabs.Movement:CreateToggle({Name="Infinite Jump",CurrentValue=false,Callback=function(v) getgenv().InfJump=v end})
-game:GetService("UserInputService").JumpRequest:Connect(function() if getgenv().InfJump then LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") end end)
-local noclip=false
-tabs.Movement:CreateToggle({Name="Noclip",CurrentValue=false,Callback=function(v) noclip=v end})
-RunService.Stepped:Connect(function() if noclip then for _,p in pairs(LocalPlayer.Character:GetDescendants()) do if p:IsA("BasePart") then p.CanCollide=false end end end end)
-tabs.Movement:CreateToggle({Name="Fly",CurrentValue=false,Callback=function(v)
-    getgenv().Fly=v
-    local hrp=LocalPlayer.Character.HumanoidRootPart; local cam=workspace.CurrentCamera
-    spawn(function()
-        local bv, bg
-        while getgenv().Fly do
-            if not bv then bv=Instance.new("BodyVelocity",hrp); bv.MaxForce=Vector3.new(1e5,1e5,1e5) end
-            if not bg then bg=Instance.new("BodyGyro",hrp); bg.MaxTorque=Vector3.new(1e5,1e5,1e5); bg.CFrame=cam.CFrame end
-            local mv=Vector3.zero
-            local u=game:GetService("UserInputService")
-            if u:IsKeyDown(Enum.KeyCode.W) then mv+=cam.CFrame.LookVector end
-            if u:IsKeyDown(Enum.KeyCode.S) then mv-=cam.CFrame.LookVector end
-            if u:IsKeyDown(Enum.KeyCode.A) then mv-=cam.CFrame.RightVector end
-            if u:IsKeyDown(Enum.KeyCode.D) then mv+=cam.CFrame.RightVector end
-            if u:IsKeyDown(Enum.KeyCode.Space) then mv+=Vector3.new(0,1,0) end
-            if u:IsKeyDown(Enum.KeyCode.LeftControl) then mv-=Vector3.new(0,-1,0) end
-            bv.Velocity=mv*75; bg.CFrame=cam.CFrame
-            task.wait()
-        end
-        if bv then bv:Destroy() end
-        if bg then bg:Destroy() end
-    end)
-end})
-showVersion(tabs.Movement)
-
--- Visual Tab
-tabs.Visual:CreateButton({Name="Fullbright",Callback=function()
-    local l=game:GetService("Lighting")
-    l.Ambient, l.Brightness, l.ClockTime, l.FogEnd, l.GlobalShadows = Color3.new(1,1,1),3,12,10000,false
-end})
-tabs.Visual:CreateButton({Name="FPS Booster",Callback=function()
-    for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Fire") then v.Enabled=false
-        elseif v:IsA("Decal") or v:IsA("Texture") then v.Transparency=1
-        elseif v:IsA("BasePart") then v.Material=Enum.Material.SmoothPlastic; v.Reflectance=0 end
+task.spawn(function()
+    local startTime = os.time()
+    while task.wait(1) do
+        local elapsed = os.time() - startTime
+        local h = math.floor(elapsed / 3600)
+        local m = math.floor((elapsed % 3600) / 60)
+        local s = elapsed % 60
+        sessionTimer:SetTitle(string.format("Session Time: %02d:%02d:%02d", h, m, s))
     end
-end})
-showVersion(tabs.Visual)
+end)
 
--- Misc Tab
-tabs.Misc:CreateButton({Name="Anti-AFK",Callback=function()
-    local vu=game:GetService("VirtualUser")
-    game.Players.LocalPlayer.Idled:Connect(function()
-        vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-        task.wait(1)
-        vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-    end)
-end})
-showVersion(tabs.Misc)
+player.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(), workspace.CurrentCamera.CFrame)
+end)
 
--- Credits Tab
-tabs.Credits:CreateParagraph({Title="Credits",Content="YouTube: skulldagrait\nGitHub: github.com/skulldagrait\nDiscord: skulldagrait"})
-showVersion(tabs.Credits)
+SaveManager:SetLibrary(Fluent)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({"ESP", "speedValue"})
+SaveManager:BuildConfigSection(Tabs.Settings)
+Window:SelectTab(1)
+
+Fluent:Notify({
+    Title = "Stands Awakening - By skulldagrait v2.1",
+    Content = "GUI loaded successfully",
+    Duration = 4
+})
