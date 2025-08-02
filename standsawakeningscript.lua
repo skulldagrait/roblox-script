@@ -1,11 +1,20 @@
-
 -- Stands Awakening Hub – by skulldagrait
 -- Version: v2.1
 
--- Main loader
-loadstring(game:HttpGet("https://raw.githubusercontent.com/skulldagrait/roblox-script/main/standsawakeningscript.lua"))()
+print("[Stands Awakening Hub] Script started")
 
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+-- Fixed Rayfield loading
+local successRayfield, Rayfield = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source.lua"))()
+end)
+
+if not successRayfield or not Rayfield then
+    warn("[Rayfield] Failed to load UI library.")
+    return
+end
+
+print("[Rayfield] UI library loaded successfully.")
+
 local Window = Rayfield:CreateWindow({
     Name = "Stands Awakening Hub",
     LoadingTitle = "Stands Awakening Hub",
@@ -23,8 +32,7 @@ local Window = Rayfield:CreateWindow({
     KeySystem = false,
 })
 
--- [UI Tabs and Logic - OMITTED HERE FOR BREVITY]
--- Assume tabs: Visuals, Movement, Items, Teleport (with original teleport coords), Boss, Misc, Credits
+-- (Your UI tabs and logic would go here...)
 
 -- AutoBoss Enhancements
 repeat task.wait() until game:IsLoaded() and game:GetService("Players").LocalPlayer
@@ -114,10 +122,6 @@ task.spawn(function()
         task.wait(0.1)
     end
 end)
-
--- [Dupe Button Placeholder Logic Here: executes !trade {LocalPlayer.Name} automatically]
-
-
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
