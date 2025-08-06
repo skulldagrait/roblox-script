@@ -1,197 +1,179 @@
--- Stands Awakening Hub – by skulldagrait
--- Version: v2.1
-
-print("[Stands Awakening Hub] Script started")
-
--- Fixed Rayfield loading
-local successRayfield, Rayfield = pcall(function()
+local success, Rayfield = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source.lua"))()
 end)
-
-if not successRayfield or not Rayfield then
-    warn("[Rayfield] Failed to load UI library.")
-    return
-end
-
-print("[Rayfield] UI library loaded successfully.")
-
-local Window = Rayfield:CreateWindow({
-    Name = "Stands Awakening Hub",
-    LoadingTitle = "Stands Awakening Hub",
-    LoadingSubtitle = "by skulldagrait",
-    ConfigurationSaving = {
-       Enabled = true,
-       FolderName = "StandsAwakeningHub", 
-       FileName = "v2.1"
-    },
-    Discord = {
-       Enabled = true,
-       Invite = "",
-       RememberJoins = true 
-    },
-    KeySystem = false,
-})
-
--- (Your UI tabs and logic would go here...)
-
--- AutoBoss Enhancements
-repeat task.wait() until game:IsLoaded() and game:GetService("Players").LocalPlayer
+if not success or not Rayfield then return end
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local Humanoid = Character:WaitForChild("Humanoid")
-
-local Time = true
-local Attacking = game:GetService("Workspace"):WaitForChild("Dead")
-local Obby = game:GetService("Workspace"):WaitForChild("ObbyW")
-local Phase = game:GetService("Workspace"):WaitForChild("BossPhase")
-local Health = game:GetService("Workspace"):WaitForChild("TrollHealth")
-
-if game:GetService("Workspace"):FindFirstChild("Effects") then
-    game:GetService("Workspace").Effects:Destroy()
-end
-
-if game:GetService("Workspace").Map:FindFirstChild("ThunderParts") then
-    game:GetService("Workspace").Map.ThunderParts:Destroy()
-end
-
-local function setupSword()
-    local sword = Character:FindFirstChild("KnightsSword") 
-               or LocalPlayer.Backpack:FindFirstChild("KnightsSword")
-               or game:GetService("Workspace"):FindFirstChild("KnightsSword")
-
-    if sword then
-        if sword.Parent ~= Character then
-            sword.Parent = LocalPlayer.Backpack
-            Humanoid:UnequipTools()
-            sword.Parent = Character
-        end
-
-        if sword:FindFirstChild("Handle") then
-            if not sword.Handle:FindFirstChild("SelectionBoxCreated") then
-                local Box = Instance.new("SelectionBox")
-                Box.Name = "SelectionBoxCreated"
-                Box.Parent = sword.Handle
-                Box.Adornee = sword.Handle
-            end
-
-            sword.Handle.Massless = true
-            sword.GripPos = Vector3.new(0, 0, 0)
-            sword.Handle.Size = Vector3.new(20, 20, 500)
-        end
-    else
-        warn("KnightsSword not found")
-    end
-end
-
-local function swordCheck()
-    while true do
-        setupSword()
-        task.wait(5)
-    end
-end
-
-task.spawn(swordCheck)
-
-task.spawn(function()
-    while true do
-        if Attacking.Value == false then
-            if Obby.Value == true then
-                HumanoidRootPart.CFrame = CFrame.new(20.45, 113.24, 196.61)
-            else
-                if Phase.Value == "None" then
-                    HumanoidRootPart.CFrame = CFrame.new(-5.47, -4.45, 248.21)
-                else
-                    HumanoidRootPart.CFrame = CFrame.new(-19.89, -4.77, 142.49)
-                end
-            end
-        end
-        task.wait()
-    end
-end)
-
-task.spawn(function()
-    while true do
-        if Attacking.Value == false and Obby.Value == false then
-            if Character:FindFirstChild("KnightsSword") then
-                Character.KnightsSword:Activate()
-            end
-        end
-        task.wait(0.1)
-    end
-end)
-
-local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local TeleportService = game:GetService("TeleportService")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 
-local player = Players.LocalPlayer
+local staffList = {
+    [1534146802] = true,
+    [724026832]  = true,
+    [1484252645] = true,
+    [2938109169] = true,
+    [1552962633] = true,
+}
 
-local canAttack = true
-local ATTACK_COOLDOWN = 5 -- seconds
-
-local function getCharacter()
-    return player.Character or player.CharacterAdded:Wait()
-end
-
-local function getAnimator(humanoid)
-    local animator = humanoid:FindFirstChildOfClass("Animator")
-    if not animator then
-        animator = Instance.new("Animator")
-        animator.Parent = humanoid
+local StaffDetected = false
+local function checkForStaff(player)
+    if StaffDetected then return end
+    if staffList[player.UserId] then
+        StaffDetected = true
+        LocalPlayer:Kick("Staff detected: " .. player.Name)
     end
-    return animator
 end
 
-local function playAttackAnimation(humanoid)
-    local animator = getAnimator(humanoid)
-    local anim = Instance.new("Animation")
-    anim.AnimationId = "rbxassetid://5940026539"
-
-    local track = animator:LoadAnimation(anim)
-    track:Play()
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        checkForStaff(player)
+    end
 end
 
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode ~= Enum.KeyCode.Y then return end
-    if not canAttack then return end -- cooldown check
+Players.PlayerAdded:Connect(checkForStaff)
 
-    canAttack = false -- start cooldown
+local Window = Rayfield:CreateWindow({
+    Name = "Skulldagrait - Stands Awakening",
+    LoadingTitle = "Skulldagrait Hub",
+    LoadingSubtitle = "by skulldagrait",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "SkulldagraitHub",
+        FileName = "Config"
+    },
+    Discord = { Enabled = false },
+    KeySystem = false
+})
 
-    local character = getCharacter()
-    local humanoid = character:FindFirstChild("Humanoid")
-    local rootPart = character:FindFirstChild("HumanoidRootPart")
-    if not humanoid or not rootPart then return end
+local autobossRunning = false
 
-    playAttackAnimation(humanoid)
+local autobossSection = Window:CreateTab("AutoBoss")
+local fpsSection = Window:CreateTab("FPS Booster")
+local teleportSection = Window:CreateTab("Teleports")
+local miscSection = Window:CreateTab("Miscellaneous")
 
-    local ATTACK_RANGE = 5
-
-    for _, otherPlayer in ipairs(Players:GetPlayers()) do
-        if otherPlayer ~= player and otherPlayer.Character then
-            local otherChar = otherPlayer.Character
-            local otherHumanoid = otherChar:FindFirstChild("Humanoid")
-            local otherRoot = otherChar:FindFirstChild("HumanoidRootPart")
-
-            if otherHumanoid and otherRoot then
-                local distance = (rootPart.Position - otherRoot.Position).Magnitude
-                if distance <= ATTACK_RANGE then
-                    local args1 = {
-                        [1] = "Damage",
-                        [2] = "Freeze",
-                        [4] = true,
-                        [5] = otherHumanoid
-                    }
-                    ReplicatedStorage.Main.Input:FireServer(unpack(args1))
-                end
-            end
+autobossSection:CreateToggle({
+    Name = "Enable AutoBoss",
+    CurrentValue = false,
+    Flag = "AutoBossToggle",
+    Callback = function(value)
+        autobossRunning = value
+        if value then
+            task.spawn(function()
+                repeat
+                    task.wait()
+                    if not autobossRunning then break end
+                    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and Workspace:FindFirstChild("Dead") and Workspace.Dead.Value == false then
+                        local hrp = LocalPlayer.Character.HumanoidRootPart
+                        if Workspace:FindFirstChild("BossPhase") then
+                            if Workspace.BossPhase.Value == "None" then
+                                hrp.CFrame = CFrame.new(-5.47, -4.45, 248.21)
+                            else
+                                hrp.CFrame = CFrame.new(-19.89, -4.77, 142.49)
+                            end
+                        end
+                    end
+                until not autobossRunning
+            end)
         end
     end
+})
 
-    task.delay(ATTACK_COOLDOWN, function()
-        canAttack = true
-    end)
-end)
+local fpsBoostActive = false
+fpsSection:CreateToggle({
+    Name = "Enable FPS Booster",
+    CurrentValue = false,
+    Flag = "FPSBoosterToggle",
+    Callback = function(enabled)
+        fpsBoostActive = enabled
+        if enabled then
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") or v:IsA("Decal") or v:IsA("Texture") then
+                    v.Material = Enum.Material.SmoothPlastic
+                    v.Reflectance = 0
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
+                    v.Enabled = false
+                end
+            end
+            pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+            pcall(function()
+                if Workspace:FindFirstChildOfClass("Lighting") then
+                    for _, light in pairs(Workspace:GetDescendants()) do
+                        if light:IsA("ShadowMapLighting") then
+                            light.Enabled = false
+                        end
+                    end
+                end
+            end)
+        else
+            for _, v in pairs(Workspace:GetDescendants()) do
+                if v:IsA("BasePart") or v:IsA("Decal") or v:IsA("Texture") then
+                    v.Material = Enum.Material.Plastic
+                    v.Reflectance = 0
+                elseif v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Beam") then
+                    v.Enabled = true
+                end
+            end
+            pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level21 end)
+        end
+    end
+})
+
+teleportSection:CreateButton({
+    Name = "Teleport to Spawn",
+    Callback = function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-5.47, -4.45, 248.21)
+        end
+    end
+})
+
+teleportSection:CreateButton({
+    Name = "Teleport to Boss",
+    Callback = function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(-19.89, -4.77, 142.49)
+        end
+    end
+})
+
+miscSection:CreateButton({
+    Name = "Rejoin Server",
+    Callback = function()
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    end
+})
+
+miscSection:CreateButton({
+    Name = "Serverhop",
+    Callback = function()
+        task.spawn(function()
+            local placeId = game.PlaceId
+            local jobId = game.JobId
+            local serversUrl = ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100"):format(placeId)
+            local response = HttpService:GetAsync(serversUrl)
+            local data = HttpService:JSONDecode(response)
+            for _, server in pairs(data.data) do
+                if server.playing < server.maxPlayers and server.id ~= jobId then
+                    TeleportService:TeleportToPlaceInstance(placeId, server.id)
+                    break
+                end
+            end
+        end)
+    end
+})
+
+local creditLabel = Instance.new("TextLabel")
+creditLabel.Size = UDim2.new(0, 300, 0, 30)
+creditLabel.Position = UDim2.new(0, 10, 1, -40)
+creditLabel.BackgroundTransparency = 1
+creditLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+creditLabel.Text = "Made by skulldagrait"
+creditLabel.Font = Enum.Font.GothamBold
+creditLabel.TextSize = 14
+creditLabel.TextXAlignment = Enum.TextXAlignment.Right
+creditLabel.Parent = Rayfield.UI.Window
